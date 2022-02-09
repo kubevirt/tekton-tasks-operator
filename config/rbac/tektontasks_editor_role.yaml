@@ -1,0 +1,24 @@
+# permissions for end users to edit tektontasks.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: tektontasks-editor-role
+rules:
+- apiGroups:
+  - tektontasks.kubevirt.io
+  resources:
+  - tektontasks
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - tektontasks.kubevirt.io
+  resources:
+  - tektontasks/status
+  verbs:
+  - get

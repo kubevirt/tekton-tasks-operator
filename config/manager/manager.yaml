@@ -1,0 +1,66 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tekton-tasks-operator
+  namespace: kubevirt
+  labels:
+    control-plane: tekton-tasks-operator
+    name: tekton-tasks-operator
+    app: tekton-tasks-operator
+spec:
+  selector:
+    matchLabels:
+      control-plane: tekton-tasks-operator
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        control-plane: tekton-tasks-operator
+        name: tekton-tasks-operator
+        prometheus.kubevirt.io: "true"
+    spec:
+      serviceAccountName: tekton-tasks-operator
+      priorityClassName: system-cluster-critical
+      securityContext:
+        runAsNonRoot: true
+      containers:
+      - command:
+        - /manager
+        args: ["--leader-elect"]
+        env:
+          - name: RUN_OPERATOR
+            value: "true"
+          - name: "OPERATOR_VERSION"
+          - name: "CLEANUP_VM_IMG"
+          - name: "COPY_TEMPLATE_IMG"
+          - name: "CREATE_DATAVOLUME_IMG"
+          - name: "CREATE_VM_IMG"
+          - name: "DISK_VIRT_CUSTOMIZE_IMG"
+          - name: "DISK_VIRT_SYSPREP_IMG"
+          - name: "MODIFY_VM_TEMPLATE_IMG"
+          - name: "WAIT_FOR_VMI_STATUS_IMG"
+        image: controller:latest
+        name: manager
+        resources:
+          requests:
+            memory: "150Mi"
+            cpu: "100m"
+        securityContext:
+          allowPrivilegeEscalation: false
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8081
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        ports:
+          - name: metrics
+            protocol: TCP
+            containerPort: 8443
+        readinessProbe:
+          httpGet:
+            path: /readyz
+            port: 8081
+          initialDelaySeconds: 5
+          periodSeconds: 10
+      terminationGracePeriodSeconds: 10

@@ -1,0 +1,20 @@
+# permissions for end users to view tektontasks.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: tektontasks-viewer-role
+rules:
+- apiGroups:
+  - tektontasks.kubevirt.io
+  resources:
+  - tektontasks
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - tektontasks.kubevirt.io
+  resources:
+  - tektontasks/status
+  verbs:
+  - get

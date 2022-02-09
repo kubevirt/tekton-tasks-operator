@@ -1,0 +1,8 @@
+apiVersion: tektontasks.kubevirt.io/v1alpha1
+kind: TektonTasks
+metadata:
+  name: tektontasks-sample
+  namespace: kubevirt
+spec:
+  pipelines:
+    namespace: kubevirt

@@ -1,0 +1,336 @@
+apiVersion: operators.coreos.com/v1alpha1
+kind: ClusterServiceVersion
+metadata:
+  annotations:
+    alm-examples: |-
+      [
+        {
+          "apiVersion": "tektontasks.kubevirt.io/v1alpha1",
+          "kind": "TektonTasks",
+          "metadata": {
+            "name": "tektontasks-sample",
+            "namespace": "kubevirt"
+          },
+          "spec": {
+            "pipelines": {
+              "namespace": "kubevirt"
+            }
+          }
+        }
+      ]
+    capabilities: Basic Install
+    operators.operatorframework.io/builder: operator-sdk-v1.8.0+git
+    operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
+  name: tekton-tasks-operator.v0.0.1
+  namespace: placeholder
+spec:
+  apiservicedefinitions: {}
+  customresourcedefinitions:
+    owned:
+    - description: TektonTasks is the Schema for the tektontasks API
+      displayName: Tekton Tasks
+      kind: TektonTasks
+      name: tektontasks.tektontasks.kubevirt.io
+      version: v1alpha1
+  description: operator, which deploys kubevirt-tekton-tasks
+  displayName: tekton-tasks-operator
+  icon:
+  - base64data: ""
+    mediatype: ""
+  install:
+    spec:
+      clusterPermissions:
+      - rules:
+        - apiGroups:
+          - '*'
+          resources:
+          - configmaps
+          verbs:
+          - create
+          - list
+          - watch
+        - apiGroups:
+          - '*'
+          resources:
+          - persistentvolumeclaims
+          verbs:
+          - '*'
+        - apiGroups:
+          - '*'
+          resources:
+          - secrets
+          verbs:
+          - get
+          - list
+          - watch
+        - apiGroups:
+          - admissionregistration.k8s.io
+          resources:
+          - mutatingwebhookconfigurations
+          verbs:
+          - get
+          - list
+          - watch
+        - apiGroups:
+          - admissionregistration.k8s.io
+          resources:
+          - validatingwebhookconfigurations
+          verbs:
+          - get
+          - list
+          - watch
+        - apiGroups:
+          - apiextensions.k8s.io
+          resources:
+          - customresourcedefinitions
+          verbs:
+          - get
+          - list
+          - watch
+        - apiGroups:
+          - cdi.kubevirt.io
+          resources:
+          - datavolumes
+          verbs:
+          - '*'
+        - apiGroups:
+          - config.openshift.io
+          resources:
+          - clusterversions
+          verbs:
+          - get
+        - apiGroups:
+          - ""
+          resources:
+          - serviceaccounts
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - kubevirt.io
+          resources:
+          - virtualmachineinstances
+          - virtualmachines
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - update
+          - watch
+        - apiGroups:
+          - kubevirt.io
+          resources:
+          - virtualmachines/finalizers
+          verbs:
+          - '*'
+        - apiGroups:
+          - rbac.authorization.k8s.io
+          resources:
+          - clusterroles
+          - rolebindings
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - subresources.kubevirt.io
+          resources:
+          - virtualmachines/restart
+          - virtualmachines/start
+          - virtualmachines/stop
+          verbs:
+          - update
+        - apiGroups:
+          - tekton.dev
+          resources:
+          - clustertasks
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - tekton.dev
+          resources:
+          - pipelines
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - tektontasks.kubevirt.io
+          resources:
+          - tektontasks
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - tektontasks.kubevirt.io
+          resources:
+          - tektontasks/finalizers
+          verbs:
+          - update
+        - apiGroups:
+          - tektontasks.kubevirt.io
+          resources:
+          - tektontasks/status
+          verbs:
+          - get
+          - patch
+          - update
+        - apiGroups:
+          - template.openshift.io
+          resources:
+          - processedtemplates
+          verbs:
+          - create
+        - apiGroups:
+          - template.openshift.io
+          resources:
+          - templates
+          verbs:
+          - create
+          - get
+          - list
+          - patch
+          - watch
+        serviceAccountName: tekton-tasks-operator
+      deployments:
+      - name: tekton-tasks-operator
+        spec:
+          replicas: 1
+          selector:
+            matchLabels:
+              control-plane: tekton-tasks-operator
+          strategy: {}
+          template:
+            metadata:
+              labels:
+                control-plane: tekton-tasks-operator
+                name: tekton-tasks-operator
+                prometheus.kubevirt.io: "true"
+            spec:
+              containers:
+              - args:
+                - --leader-elect
+                command:
+                - /manager
+                env:
+                - name: RUN_OPERATOR
+                  value: "true"
+                - name: OPERATOR_VERSION
+                - name: CLEANUP_VM_IMG
+                - name: COPY_TEMPLATE_IMG
+                - name: CREATE_DATAVOLUME_IMG
+                - name: CREATE_VM_IMG
+                - name: DISK_VIRT_CUSTOMIZE_IMG
+                - name: DISK_VIRT_SYSPREP_IMG
+                - name: MODIFY_VM_TEMPLATE_IMG
+                - name: WAIT_FOR_VMI_STATUS_IMG
+                image: quay.io/kubevirt/tekton-tasks-operator:v0.0.1
+                livenessProbe:
+                  httpGet:
+                    path: /healthz
+                    port: 8081
+                  initialDelaySeconds: 15
+                  periodSeconds: 20
+                name: manager
+                ports:
+                - containerPort: 8443
+                  name: metrics
+                  protocol: TCP
+                readinessProbe:
+                  httpGet:
+                    path: /readyz
+                    port: 8081
+                  initialDelaySeconds: 5
+                  periodSeconds: 10
+                resources:
+                  requests:
+                    cpu: 100m
+                    memory: 150Mi
+                securityContext:
+                  allowPrivilegeEscalation: false
+              priorityClassName: system-cluster-critical
+              securityContext:
+                runAsNonRoot: true
+              serviceAccountName: tekton-tasks-operator
+              terminationGracePeriodSeconds: 10
+      permissions:
+      - rules:
+        - apiGroups:
+          - ""
+          resources:
+          - configmaps
+          verbs:
+          - get
+          - list
+          - watch
+          - create
+          - update
+          - patch
+          - delete
+        - apiGroups:
+          - coordination.k8s.io
+          resources:
+          - leases
+          verbs:
+          - get
+          - list
+          - watch
+          - create
+          - update
+          - patch
+          - delete
+        - apiGroups:
+          - ""
+          resources:
+          - events
+          verbs:
+          - create
+          - patch
+        serviceAccountName: tekton-tasks-operator
+    strategy: deployment
+  installModes:
+  - supported: false
+    type: OwnNamespace
+  - supported: false
+    type: SingleNamespace
+  - supported: false
+    type: MultiNamespace
+  - supported: true
+    type: AllNamespaces
+  keywords:
+  - kubevirt
+  - VM
+  - tekton
+  links:
+  - name: Kubevirt Tekton Tasks Operator
+    url: https://tekton-tasks-operator.domain
+  maturity: alpha
+  provider:
+    name: kubevirt.io
+    url: kubevirt.io
+  version: 0.0.1

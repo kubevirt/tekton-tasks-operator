@@ -1,0 +1,12 @@
+.vscode/*
+.history
+.idea
+/operator-sdk
+/yq
+_out/*
+build/_output/*
+bin/*
+bundle/*
+cover.out
+bundle.Dockerfile
+config/manager/manager.yaml
