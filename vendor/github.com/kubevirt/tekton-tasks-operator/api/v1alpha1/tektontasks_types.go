@@ -27,7 +27,13 @@ const (
 
 // TektonTasksSpec defines the desired state of TektonTasks
 type TektonTasksSpec struct {
-	Pipelines Pipelines `json:"pipelines"`
+	Pipelines    Pipelines    `json:"pipelines,omitempty"`
+	FeatureGates FeatureGates `json:"featureGates,omitempty"`
+}
+
+// FeatureGates defines feature gate for tto operator
+type FeatureGates struct {
+	DeployTektonTaskResources bool `json:"deployTektonTaskResources,omitempty"`
 }
 
 // Pipelines defines variables for configuration of pipelines

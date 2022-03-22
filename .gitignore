@@ -9,4 +9,5 @@ bin/*
 bundle/*
 cover.out
 bundle.Dockerfile
+tests.test
 config/manager/manager.yaml

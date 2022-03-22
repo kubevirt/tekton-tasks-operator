@@ -302,7 +302,7 @@ func createSspListerWatcher(cfg *rest.Config) cache.ListerWatcher {
 	restClient, err := apiutil.RESTClientForGVK(sspGvk, false, cfg, serializer.NewCodecFactory(testScheme))
 	Expect(err).ToNot(HaveOccurred())
 
-	return cache.NewListWatchFromClient(restClient, "ssps", strategy.GetNamespace(), fields.Everything())
+	return cache.NewListWatchFromClient(restClient, "tektontasks", strategy.GetNamespace(), fields.Everything())
 }
 
 func getTekton() *tekton.TektonTasks {

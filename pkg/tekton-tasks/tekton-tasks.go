@@ -159,7 +159,18 @@ func (t *tektonTasks) Reconcile(request *common.Request) ([]common.ReconcileResu
 
 func (t *tektonTasks) Cleanup(request *common.Request) ([]common.CleanupResult, error) {
 	var objects []client.Object
-
+	for _, ct := range t.clusterTasks {
+		objects = append(objects, &ct)
+	}
+	for _, cr := range t.clusterRoles {
+		objects = append(objects, &cr)
+	}
+	for _, rb := range t.roleBindings {
+		objects = append(objects, &rb)
+	}
+	for _, sa := range t.serviceAccounts {
+		objects = append(objects, &sa)
+	}
 	return common.DeleteAll(request, objects...)
 }
 

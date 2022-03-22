@@ -2,17 +2,20 @@ package controllers
 
 import (
 	"context"
+	"errors"
 	"sync"
 
+	tekton "github.com/kubevirt/tekton-tasks-operator/api/v1alpha1"
+	"github.com/kubevirt/tekton-tasks-operator/controllers/finishable"
+	"github.com/kubevirt/tekton-tasks-operator/pkg/common"
+	"github.com/kubevirt/tekton-tasks-operator/pkg/environment"
 	extv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	controllerruntime "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
-
-	"github.com/kubevirt/tekton-tasks-operator/controllers/finishable"
 )
 
 // +kubebuilder:rbac:groups=apiextensions.k8s.io,resources=customresourcedefinitions,verbs=get;list;watch
@@ -51,11 +54,16 @@ type waitForCrds struct {
 var _ finishable.Reconciler = &waitForCrds{}
 
 func (w *waitForCrds) Reconcile(ctx context.Context, request reconcile.Request) (finishable.Result, error) {
+	err := setConditions(w.client)
+	if err != nil {
+		return finishable.Result{}, err
+	}
+
 	crdExists := true
 	crd := &extv1.CustomResourceDefinition{}
-	err := w.client.Get(ctx, request.NamespacedName, crd)
+	err = w.client.Get(ctx, request.NamespacedName, crd)
 	if err != nil {
-		if !errors.IsNotFound(err) {
+		if !apierrors.IsNotFound(err) {
 			return finishable.Result{}, err
 		}
 		crdExists = false
@@ -98,4 +106,27 @@ func (w *waitForCrds) allCrdsExist() bool {
 		allExist = allExist && exists
 	}
 	return allExist
+}
+
+func setConditions(cli client.Client) error {
+	operatorNamespace := environment.GetOperatorNamespace()
+	instances := &tekton.TektonTasksList{}
+	err := cli.List(context.TODO(), instances, client.InNamespace(operatorNamespace))
+	if err != nil {
+		return err
+	}
+
+	if len(instances.Items) == 0 {
+		return nil
+	}
+
+	if len(instances.Items) > 1 {
+		return errors.New("multiple TektonTasks CRs in single namespace")
+	}
+
+	err = updateStatus(&common.Request{Instance: &instances.Items[0], Client: cli, Context: context.TODO()}, []common.ReconcileResult{})
+	if err != nil {
+		return err
+	}
+	return nil
 }

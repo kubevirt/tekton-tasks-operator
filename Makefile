@@ -41,7 +41,9 @@ BUNDLE_IMG ?= $(IMAGE_TAG_BASE)-bundle:v$(VERSION)
 IMG_REPOSITORY ?= quay.io/kubevirt/tekton-tasks-operator
 IMG_TAG ?= v0.1.0
 IMG ?= ${IMG_REPOSITORY}:${IMG_TAG}
+
 SRC_PATHS_TESTS = ./controllers/... ./pkg/...  ./scripts/...
+SRC_PATHS_CONTROLLER_GEN = {./controllers/..., ./pkg/..., ./hack/...}
 
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
 ifeq (,$(shell go env GOBIN))
@@ -76,7 +78,8 @@ functest: generate fmt vet manifests
 
 .PHONY: manifests
 manifests: controller-gen ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
-	$(CONTROLLER_GEN) rbac:roleName=manager-role crd webhook paths="./..." output:crd:artifacts:config=config/crd/bases
+	cd api && $(CONTROLLER_GEN)  rbac:roleName=operator-role crd object "paths=./..." output:crd:artifacts:config=../config/crd/bases
+	$(CONTROLLER_GEN) rbac:roleName=manager-role crd webhook "paths=$(SRC_PATHS_CONTROLLER_GEN)" output:crd:artifacts:config=config/crd/bases
 
 .PHONY: generate
 generate: controller-gen ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.

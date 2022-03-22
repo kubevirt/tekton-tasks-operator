@@ -23,6 +23,7 @@ import (
 
 const (
 	OperatorVersionKey        = "OPERATOR_VERSION"
+	OperatorNamespaceKey      = "OPERATOR_NAMESPACE"
 	CleanupVMImageKey         = "CLEANUP_VM_IMG"
 	CopyTemplateImageKey      = "COPY_TEMPLATE_IMG"
 	CreateDatavolumeImageKey  = "CREATE_DATAVOLUME_IMG"
@@ -82,6 +83,11 @@ func GetCopyTemplateImage() string {
 // GetCleanupVMImage returns cleanup-vm task image url
 func GetCleanupVMImage() string {
 	return EnvOrDefault(CleanupVMImageKey, DeafultCleanupVMIMG)
+}
+
+// GetModifyVMTemplateImage returns modify-vm-template task image url
+func GetOperatorNamespace() string {
+	return EnvOrDefault(OperatorNamespaceKey, "kubevirt")
 }
 
 func LookupAsDuration(varName string) (time.Duration, error) {

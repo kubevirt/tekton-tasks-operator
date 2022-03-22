@@ -10,7 +10,6 @@ import (
 	tektonbundle "github.com/kubevirt/tekton-tasks-operator/pkg/tekton-bundle"
 	tektonpipelines "github.com/kubevirt/tekton-tasks-operator/pkg/tekton-pipelines"
 	tektontasks "github.com/kubevirt/tekton-tasks-operator/pkg/tekton-tasks"
-
 	controllerruntime "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 )

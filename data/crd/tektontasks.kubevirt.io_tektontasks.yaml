@@ -34,14 +34,18 @@ spec:
           spec:
             description: TektonTasksSpec defines the desired state of TektonTasks
             properties:
+              featureGates:
+                description: FeatureGates defines feature gate for tto operator
+                properties:
+                  deployTektonTaskResources:
+                    type: boolean
+                type: object
               pipelines:
                 description: Pipelines defines variables for configuration of pipelines
                 properties:
                   namespace:
                     type: string
                 type: object
-            required:
-            - pipelines
             type: object
           status:
             description: TektonTasksStatus defines the observed state of TektonTasks

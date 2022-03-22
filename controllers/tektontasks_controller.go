@@ -149,12 +149,17 @@ func (r *tektonTasksReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	}
 	tektonRequest.Logger.V(1).Info("CR status updated")
 
-	tektonRequest.Logger.Info("Reconciling operands...")
-	reconcileResults, err := r.reconcileOperands(tektonRequest)
-	if err != nil {
-		return handleError(tektonRequest, err)
+	reconcileResults := []common.ReconcileResult{}
+	if tektonRequest.Instance.Spec.FeatureGates.DeployTektonTaskResources {
+		tektonRequest.Logger.Info("Reconciling operands...")
+		reconcileResults, err = r.reconcileOperands(tektonRequest)
+		if err != nil {
+			return handleError(tektonRequest, err)
+		}
+		tektonRequest.Logger.V(1).Info("Operands reconciled")
+	} else {
+		tektonRequest.Logger.V(1).Info("Resources were not deployed, because spec.featureGates.deployTektonTaskResources is set to false")
 	}
-	tektonRequest.Logger.V(1).Info("Operands reconciled")
 
 	tektonRequest.Logger.V(1).Info("Updating CR status post reconciliation...")
 	err = updateStatus(tektonRequest, reconcileResults)
@@ -440,7 +445,7 @@ func updateStatus(request *common.Request, reconcileResults []common.ReconcileRe
 			Type:    conditionsv1.ConditionAvailable,
 			Status:  v1.ConditionTrue,
 			Reason:  "Available",
-			Message: "All Tekton tasks resources are available",
+			Message: "Tekton operator is available",
 		})
 	case 1:
 		reconcileResult := notAvailable[0]
