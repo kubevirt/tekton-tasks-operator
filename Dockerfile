@@ -28,6 +28,8 @@ LABEL org.kubevirt.hco.csv-generator.v1="/csv-generator"
 
 WORKDIR /
 
+RUN microdnf update -y && microdnf clean all
+
 COPY --from=builder /workspace/bin/manager .
 COPY data/ data/
 

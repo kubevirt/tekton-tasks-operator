@@ -3,7 +3,7 @@
 # To re-generate a bundle for another specific version without changing the standard setup, you can:
 # - use the VERSION as arg of the bundle target (e.g make bundle VERSION=0.0.2)
 # - use environment variables to overwrite this value (e.g export VERSION=0.0.2)
-VERSION ?= 0.0.1
+VERSION ?= 0.1.2
 
 #operator-sdk version
 OPERATOR_SDK_VERSION ?= v1.9.0
@@ -39,7 +39,7 @@ IMAGE_TAG_BASE ?= kubevirt/tekton-tasks-operator
 BUNDLE_IMG ?= $(IMAGE_TAG_BASE)-bundle:v$(VERSION)
 
 IMG_REPOSITORY ?= quay.io/kubevirt/tekton-tasks-operator
-IMG_TAG ?= v0.1.0
+IMG_TAG ?= v0.1.2
 IMG ?= ${IMG_REPOSITORY}:${IMG_TAG}
 
 SRC_PATHS_TESTS = ./controllers/... ./pkg/...  ./scripts/...
