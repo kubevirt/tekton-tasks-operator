@@ -21,8 +21,6 @@ spec:
     spec:
       serviceAccountName: tekton-tasks-operator
       priorityClassName: system-cluster-critical
-      securityContext:
-        runAsNonRoot: true
       containers:
       - command:
         - /manager
