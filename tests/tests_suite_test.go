@@ -86,14 +86,17 @@ func (t *newTektonStrategy) Init() {
 			Name:      t.GetName(),
 			Namespace: t.GetNamespace(),
 			Labels: map[string]string{
-				common.AppKubernetesNameLabel:      "ssp-cr",
-				common.AppKubernetesManagedByLabel: "ssp-test-strategy",
+				common.AppKubernetesNameLabel:      "tto-cr",
+				common.AppKubernetesManagedByLabel: "tto-test-strategy",
 				common.AppKubernetesPartOfLabel:    "hyperconverged-cluster",
 				common.AppKubernetesVersionLabel:   "v0.0.0-test",
 				common.AppKubernetesComponentLabel: common.AppComponentTektonTasks.String(),
 			},
 		},
 		Spec: tekton.TektonTasksSpec{
+			FeatureGates: tekton.FeatureGates{
+				DeployTektonTaskResources: true,
+			},
 			Pipelines: tekton.Pipelines{
 				Namespace: t.GetPipelinesNamespace(),
 			},
