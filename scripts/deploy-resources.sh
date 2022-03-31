@@ -18,7 +18,6 @@ fi
 
 # Deploy Tekton Pipelines
 oc apply -f https://storage.googleapis.com/tekton-releases/pipeline/latest/release.notags.yaml
-oc config set-context --current --namespace=default
 
 # Deploy Kubevirt
 oc apply -f "https://github.com/kubevirt/kubevirt/releases/download/${KUBEVIRT_VERSION}/kubevirt-operator.yaml"
