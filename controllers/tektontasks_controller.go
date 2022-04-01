@@ -145,7 +145,7 @@ func (r *tektonTasksReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	tektonRequest.Logger.V(1).Info("Updating CR status prior to operand reconciliation...")
 	err = preUpdateStatus(tektonRequest)
 	if err != nil {
-		return ctrl.Result{}, err
+		return handleError(tektonRequest, err)
 	}
 	tektonRequest.Logger.V(1).Info("CR status updated")
 
@@ -164,7 +164,7 @@ func (r *tektonTasksReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	tektonRequest.Logger.V(1).Info("Updating CR status post reconciliation...")
 	err = updateStatus(tektonRequest, reconcileResults)
 	if err != nil {
-		return ctrl.Result{}, err
+		return handleError(tektonRequest, err)
 	}
 	tektonRequest.Logger.Info("CR status updated")
 
