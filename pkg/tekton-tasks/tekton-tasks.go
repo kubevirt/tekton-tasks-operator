@@ -33,7 +33,7 @@ const (
 	cleanVMTaskName           = "cleanup-vm"
 	copyTemplateTaskName      = "copy-template"
 	datavolumeTaskName        = "create-datavolume-from-manifest"
-	createVMTaskName          = "create-vm-from-manifest"
+	createVMTaskName          = "create-vm-from-template"
 	diskVirtCustomizeTaskName = "disk-virt-customize"
 	diskVirtSysprepTaskName   = "disk-virt-sysprep"
 	modifyTemplateTaskName    = "modify-vm-template"
