@@ -14,7 +14,7 @@ import (
 )
 
 // +kubebuilder:rbac:groups=tekton.dev,resources=pipelines,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=*,resources=configmaps,verbs=list;watch;create
+// +kubebuilder:rbac:groups=*,resources=configmaps,verbs=list;watch;create;delete
 
 const (
 	operandName      = "tekton-pipelines"

@@ -53,6 +53,7 @@ spec:
           - configmaps
           verbs:
           - create
+          - delete
           - list
           - watch
         - apiGroups:
