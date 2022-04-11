@@ -1,6 +1,8 @@
 package tests
 
 import (
+	"time"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -11,13 +13,25 @@ import (
 
 var _ = Describe("Tekton-pipelines", func() {
 	Context("resource creation", func() {
+		BeforeEach(func() {
+			tto := strategy.GetTTO()
+			tto.Spec.FeatureGates.DeployTektonTaskResources = true
+			createOrUpdateTekton(tto)
+			waitUntilDeployed()
+		})
+
 		It("[test_id:TODO]operator should create pipelines in correct namespace", func() {
 			livePipelines := &pipeline.PipelineList{}
-			err := apiClient.List(ctx, livePipelines, client.MatchingLabels{
-				common.AppKubernetesManagedByLabel: common.AppKubernetesManagedByValue,
-			})
-			Expect(err).ToNot(HaveOccurred())
-			Expect(len(livePipelines.Items) > 0).To(BeTrue(), "pipelines has to exists")
+			Eventually(func() bool {
+				err := apiClient.List(ctx, livePipelines,
+					client.MatchingLabels{
+						common.AppKubernetesManagedByLabel: common.AppKubernetesManagedByValue,
+					},
+				)
+				Expect(err).ToNot(HaveOccurred())
+				return len(livePipelines.Items) > 0
+			}, tenSecondTimeout, time.Second).Should(BeTrue())
+
 			for _, pipeline := range livePipelines.Items {
 				Expect(pipeline.Labels[common.AppKubernetesComponentLabel]).To(Equal(string(common.AppComponentTektonPipelines)), "component label should equal")
 				Expect(pipeline.Labels[common.AppKubernetesManagedByLabel]).To(Equal(common.AppKubernetesManagedByValue), "managed by label should equal")

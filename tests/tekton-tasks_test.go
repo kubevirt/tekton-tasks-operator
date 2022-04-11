@@ -2,6 +2,7 @@ package tests
 
 import (
 	"strings"
+	"time"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -17,15 +18,25 @@ import (
 
 var _ = Describe("Tekton-tasks", func() {
 	Context("resource creation", func() {
+		BeforeEach(func() {
+			tto := strategy.GetTTO()
+			tto.Spec.FeatureGates.DeployTektonTaskResources = true
+			createOrUpdateTekton(tto)
+			waitUntilDeployed()
+		})
+
 		It("[test_id:TODO]operator should create only allowed tekton-tasks with correct labels", func() {
 			liveTasks := &pipeline.ClusterTaskList{}
-			err := apiClient.List(ctx, liveTasks,
-				client.MatchingLabels{
-					tektontasks.TektonTasksVersionLabel: operands.TektonTasksVersion,
-				},
-			)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(len(liveTasks.Items) > 0).To(BeTrue(), "tasks has to exists")
+			Eventually(func() bool {
+				err := apiClient.List(ctx, liveTasks,
+					client.MatchingLabels{
+						common.AppKubernetesManagedByLabel: common.AppKubernetesManagedByValue,
+					},
+				)
+				Expect(err).ToNot(HaveOccurred())
+				return len(liveTasks.Items) > 0
+			}, tenSecondTimeout, time.Second).Should(BeTrue())
+
 			for _, task := range liveTasks.Items {
 				if _, ok := tektontasks.AllowedTasks[strings.TrimSuffix(task.Name, "-task")]; !ok {
 					Expect(ok).To(BeTrue(), "only allowed task is deployed")
@@ -38,13 +49,15 @@ var _ = Describe("Tekton-tasks", func() {
 
 		It("[test_id:TODO]operator should create service accounts", func() {
 			liveSA := &v1.ServiceAccountList{}
-			err := apiClient.List(ctx, liveSA,
-				client.MatchingLabels{
-					common.AppKubernetesManagedByLabel: common.AppKubernetesManagedByValue,
-				},
-			)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(len(liveSA.Items) > 0).To(BeTrue(), "service accounts have to exists")
+			Eventually(func() bool {
+				err := apiClient.List(ctx, liveSA,
+					client.MatchingLabels{
+						common.AppKubernetesManagedByLabel: common.AppKubernetesManagedByValue,
+					},
+				)
+				Expect(err).ToNot(HaveOccurred())
+				return len(liveSA.Items) > 0
+			}, tenSecondTimeout, time.Second).Should(BeTrue())
 			for _, sa := range liveSA.Items {
 				if _, ok := tektontasks.AllowedTasks[strings.TrimSuffix(sa.Name, "-task")]; !ok {
 					Expect(ok).To(BeTrue(), "only allowed service account is deployed - "+sa.Name)
@@ -56,13 +69,15 @@ var _ = Describe("Tekton-tasks", func() {
 
 		It("[test_id:TODO]operator should create cluster role", func() {
 			liveCR := &rbac.ClusterRoleList{}
-			err := apiClient.List(ctx, liveCR,
-				client.MatchingLabels{
-					common.AppKubernetesManagedByLabel: common.AppKubernetesManagedByValue,
-				},
-			)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(len(liveCR.Items) > 0).To(BeTrue(), "cluster role have to exists")
+			Eventually(func() bool {
+				err := apiClient.List(ctx, liveCR,
+					client.MatchingLabels{
+						common.AppKubernetesManagedByLabel: common.AppKubernetesManagedByValue,
+					},
+				)
+				Expect(err).ToNot(HaveOccurred())
+				return len(liveCR.Items) > 0
+			}, tenSecondTimeout, time.Second).Should(BeTrue())
 			for _, cr := range liveCR.Items {
 				if _, ok := tektontasks.AllowedTasks[strings.TrimSuffix(cr.Name, "-task")]; !ok {
 					Expect(ok).To(BeTrue(), "only allowed cluster role is deployed - "+cr.Name)
@@ -74,13 +89,16 @@ var _ = Describe("Tekton-tasks", func() {
 
 		It("[test_id:TODO]operator should create role bindings", func() {
 			liveRB := &rbac.RoleBindingList{}
-			err := apiClient.List(ctx, liveRB,
-				client.MatchingLabels{
-					common.AppKubernetesManagedByLabel: common.AppKubernetesManagedByValue,
-				},
-			)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(len(liveRB.Items) > 0).To(BeTrue(), " role bindings have to exists")
+			Eventually(func() bool {
+				err := apiClient.List(ctx, liveRB,
+					client.MatchingLabels{
+						common.AppKubernetesManagedByLabel: common.AppKubernetesManagedByValue,
+					},
+				)
+				Expect(err).ToNot(HaveOccurred())
+				return len(liveRB.Items) > 0
+			}, tenSecondTimeout, time.Second).Should(BeTrue())
+
 			for _, rb := range liveRB.Items {
 				if _, ok := tektontasks.AllowedTasks[strings.TrimSuffix(rb.Name, "-task")]; !ok {
 					Expect(ok).To(BeTrue(), "only allowed role binding is deployed - "+rb.Name)
