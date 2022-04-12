@@ -17,6 +17,58 @@ import (
 )
 
 var _ = Describe("Tekton-tasks", func() {
+	Context("resource creation when DeployTektonTaskResources is set to false", func() {
+		BeforeEach(func() {
+			tto := strategy.GetTTO()
+			tto.Spec.FeatureGates.DeployTektonTaskResources = false
+			apiClient.Update(ctx, tto)
+		})
+
+		It("[test_id:TODO]operator should not create any cluster tasks", func() {
+			liveTasks := &pipeline.ClusterTaskList{}
+			err := apiClient.List(ctx, liveTasks,
+				client.MatchingLabels{
+					tektontasks.TektonTasksVersionLabel: operands.TektonTasksVersion,
+				},
+			)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(len(liveTasks.Items) == 0).To(BeTrue(), "tasks should not exists")
+		})
+
+		It("[test_id:TODO]operator should not create any service accounts", func() {
+			liveSA := &v1.ServiceAccountList{}
+			err := apiClient.List(ctx, liveSA,
+				client.MatchingLabels{
+					common.AppKubernetesManagedByLabel: common.AppKubernetesManagedByValue,
+				},
+			)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(len(liveSA.Items) == 0).To(BeTrue(), "service accounts should not exists")
+		})
+
+		It("[test_id:TODO]operator should not create any cluster role", func() {
+			liveCR := &rbac.ClusterRoleList{}
+			err := apiClient.List(ctx, liveCR,
+				client.MatchingLabels{
+					common.AppKubernetesManagedByLabel: common.AppKubernetesManagedByValue,
+				},
+			)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(len(liveCR.Items) == 0).To(BeTrue(), "cluster role should not exists")
+		})
+
+		It("[test_id:TODO]operator should not create role bindings", func() {
+			liveRB := &rbac.RoleBindingList{}
+			err := apiClient.List(ctx, liveRB,
+				client.MatchingLabels{
+					common.AppKubernetesManagedByLabel: common.AppKubernetesManagedByValue,
+				},
+			)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(len(liveRB.Items) == 0).To(BeTrue(), " role bindings should not exists")
+		})
+
+	})
 	Context("resource creation", func() {
 		BeforeEach(func() {
 			tto := strategy.GetTTO()
