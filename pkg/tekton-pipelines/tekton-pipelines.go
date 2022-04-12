@@ -84,10 +84,12 @@ func (t *tektonPipelines) Reconcile(request *common.Request) ([]common.Reconcile
 func (t *tektonPipelines) Cleanup(request *common.Request) ([]common.CleanupResult, error) {
 	var objects []client.Object
 	for _, p := range t.pipelines {
-		objects = append(objects, &p)
+		o := p.DeepCopy()
+		objects = append(objects, o)
 	}
 	for _, cm := range t.configMaps {
-		objects = append(objects, &cm)
+		o := cm.DeepCopy()
+		objects = append(objects, o)
 	}
 
 	return common.DeleteAll(request, objects...)

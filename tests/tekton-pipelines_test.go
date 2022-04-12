@@ -38,4 +38,28 @@ var _ = Describe("Tekton-pipelines", func() {
 			}
 		})
 	})
+
+	Context("resource deletion when CR is deleted", func() {
+		BeforeEach(func() {
+			tto := strategy.GetTTO()
+			apiClient.Delete(ctx, tto)
+		})
+
+		AfterEach(func() {
+			strategy.CreateTTOIfNeeded()
+		})
+
+		It("[test_id:TODO]operator should delete pipelines", func() {
+			livePipelines := &pipeline.PipelineList{}
+			Eventually(func() bool {
+				err := apiClient.List(ctx, livePipelines,
+					client.MatchingLabels{
+						common.AppKubernetesManagedByLabel: common.AppKubernetesManagedByValue,
+					},
+				)
+				Expect(err).ToNot(HaveOccurred())
+				return len(livePipelines.Items) == 0
+			}, tenSecondTimeout, time.Second).Should(BeTrue(), "there should be no pipelines left")
+		})
+	})
 })

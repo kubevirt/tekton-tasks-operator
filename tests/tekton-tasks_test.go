@@ -108,4 +108,68 @@ var _ = Describe("Tekton-tasks", func() {
 			}
 		})
 	})
+
+	Context("resource deletion when CR is deleted", func() {
+		BeforeEach(func() {
+			tto := strategy.GetTTO()
+			apiClient.Delete(ctx, tto)
+		})
+
+		AfterEach(func() {
+			strategy.CreateTTOIfNeeded()
+		})
+
+		It("[test_id:TODO]operator should delete tekton-tasks", func() {
+			liveTasks := &pipeline.ClusterTaskList{}
+			Eventually(func() bool {
+				err := apiClient.List(ctx, liveTasks,
+					client.MatchingLabels{
+						common.AppKubernetesManagedByLabel: common.AppKubernetesManagedByValue,
+					},
+				)
+				Expect(err).ToNot(HaveOccurred())
+				return len(liveTasks.Items) == 0
+			}, tenSecondTimeout, time.Second).Should(BeTrue(), "there should be no cluster tasks left")
+		})
+
+		It("[test_id:TODO]operator should delete service accounts", func() {
+			liveSA := &v1.ServiceAccountList{}
+			Eventually(func() bool {
+				err := apiClient.List(ctx, liveSA,
+					client.MatchingLabels{
+						common.AppKubernetesManagedByLabel: common.AppKubernetesManagedByValue,
+					},
+				)
+				Expect(err).ToNot(HaveOccurred())
+				return len(liveSA.Items) == 0
+			}, tenSecondTimeout, time.Second).Should(BeTrue(), "there should be no service accounts left")
+		})
+
+		It("[test_id:TODO]operator should delete cluster role", func() {
+			liveCR := &rbac.ClusterRoleList{}
+			Eventually(func() bool {
+				err := apiClient.List(ctx, liveCR,
+					client.MatchingLabels{
+						common.AppKubernetesManagedByLabel: common.AppKubernetesManagedByValue,
+					},
+				)
+				Expect(err).ToNot(HaveOccurred())
+				return len(liveCR.Items) == 0
+			}, tenSecondTimeout, time.Second).Should(BeTrue(), "there should be no cluster roles left")
+
+		})
+
+		It("[test_id:TODO]operator should delete role bindings", func() {
+			liveRB := &rbac.RoleBindingList{}
+			Eventually(func() bool {
+				err := apiClient.List(ctx, liveRB,
+					client.MatchingLabels{
+						common.AppKubernetesManagedByLabel: common.AppKubernetesManagedByValue,
+					},
+				)
+				Expect(err).ToNot(HaveOccurred())
+				return len(liveRB.Items) == 0
+			}, tenSecondTimeout, time.Second).Should(BeTrue(), "there should be no role bindings left")
+		})
+	})
 })
