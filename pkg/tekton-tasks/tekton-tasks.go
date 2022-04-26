@@ -20,7 +20,7 @@ import (
 // +kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=clusterroles;rolebindings,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=kubevirt.io,resources=virtualmachineinstances;virtualmachines,verbs=create;update;get;list;watch;delete
 // +kubebuilder:rbac:groups=subresources.kubevirt.io,resources=virtualmachines/restart;virtualmachines/start;virtualmachines/stop,verbs=update
-// +kubebuilder:rbac:groups=template.openshift.io,resources=templates,verbs=get;list;watch;create;patch
+// +kubebuilder:rbac:groups=template.openshift.io,resources=templates,verbs=get;list;watch;create;patch;update
 // +kubebuilder:rbac:groups=template.openshift.io,resources=processedtemplates,verbs=create
 // +kubebuilder:rbac:groups=cdi.kubevirt.io,resources=datavolumes,verbs=*
 // +kubebuilder:rbac:groups=kubevirt.io,resources=virtualmachines/finalizers,verbs=*
