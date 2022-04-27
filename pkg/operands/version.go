@@ -1,5 +1,5 @@
 package operands
 
 const (
-	TektonTasksVersion = "v0.7.0"
+	TektonTasksVersion = "v0.8.0"
 )
