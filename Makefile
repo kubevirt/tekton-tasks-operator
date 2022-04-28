@@ -73,7 +73,7 @@ unittest: fmt vet
 	go test -v -coverprofile cover.out $(SRC_PATHS_TESTS)
 	cd api && go test -v ./...
 
-functest: generate fmt vet manifests
+functest: fmt vet
 	go test -v -coverprofile cover.out -timeout 0 ./tests/...
 
 .PHONY: manifests
