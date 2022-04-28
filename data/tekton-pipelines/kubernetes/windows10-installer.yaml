@@ -1,0 +1,321 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: windows10-autounattend
+data:
+  autounattend.xml: |
+    <?xml version="1.0" encoding="utf-8"?>
+    <unattend xmlns="urn:schemas-microsoft-com:unattend" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State">
+      <settings pass="windowsPE">
+        <component name="Microsoft-Windows-International-Core-WinPE" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS">
+          <SetupUILanguage>
+            <UILanguage>en-US</UILanguage>
+          </SetupUILanguage>
+          <InputLocale>0409:00000409</InputLocale>
+          <SystemLocale>en-US</SystemLocale>
+          <UILanguage>en-US</UILanguage>
+          <UserLocale>en-US</UserLocale>
+        </component>
+        <component name="Microsoft-Windows-PnpCustomizationsWinPE" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS">
+          <DriverPaths>
+            <PathAndCredentials wcm:action="add" wcm:keyValue="1">
+              <Path>E:\viostor\w10\amd64</Path>
+            </PathAndCredentials>
+          </DriverPaths>
+        </component>
+        <component name="Microsoft-Windows-Setup" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS">
+          <DiskConfiguration>
+            <WillShowUI>Never</WillShowUI>
+            <Disk wcm:action="add">
+              <CreatePartitions>
+                <!-- Windows partition -->
+                <CreatePartition wcm:action="add">
+                  <Order>1</Order>
+                  <Type>Primary</Type>
+                  <Extend>true</Extend>
+                </CreatePartition>
+              </CreatePartitions>
+              <ModifyPartitions>
+                <!-- Windows partition -->
+                <ModifyPartition wcm:action="add">
+                  <Order>1</Order>
+                  <PartitionID>1</PartitionID>
+                  <Label>OS</Label>
+                  <Format>NTFS</Format>
+                  <Letter>C</Letter>
+                </ModifyPartition>
+              </ModifyPartitions>
+              <DiskID>0</DiskID>
+              <WillWipeDisk>true</WillWipeDisk>
+            </Disk>
+          </DiskConfiguration>
+          <ImageInstall>
+            <OSImage>
+              <InstallFrom>
+                <MetaData wcm:action="add">
+                  <Key>/Image/Description</Key>
+                  <Value>Windows 10 Pro</Value>
+                </MetaData>
+              </InstallFrom>
+              <InstallTo>
+                <DiskID>0</DiskID>
+                <PartitionID>1</PartitionID>
+              </InstallTo>
+            </OSImage>
+          </ImageInstall>
+          <UserData>
+            <AcceptEula>true</AcceptEula>
+            <ProductKey>
+              <Key/>
+            </ProductKey>
+          </UserData>
+        </component>
+      </settings>
+      <settings pass="specialize">
+        <component name="Microsoft-Windows-International-Core" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS">
+          <InputLocale>0409:00000409</InputLocale>
+          <SystemLocale>en-US</SystemLocale>
+          <UILanguage>en-US</UILanguage>
+          <UserLocale>en-US</UserLocale>
+        </component>
+      </settings>
+      <settings pass="oobeSystem">
+        <component name="Microsoft-Windows-Deployment" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS">
+          <Reseal>
+            <Mode>Audit</Mode>
+          </Reseal>
+        </component>
+      </settings>
+      <settings pass="auditUser">
+        <component name="Microsoft-Windows-Deployment" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS">
+          <RunSynchronous>
+            <RunSynchronousCommand wcm:action="add">
+              <Order>1</Order>
+              <Path>PowerShell -ExecutionPolicy Bypass -NoProfile F:\post-install.ps1</Path>
+              <Description>Run post-install script</Description>
+            </RunSynchronousCommand>
+          </RunSynchronous>
+          <Generalize>
+            <ForceShutdownNow>true</ForceShutdownNow>
+            <Mode>OOBE</Mode>
+          </Generalize>
+        </component>
+      </settings>
+    </unattend>
+  post-install.ps1: |
+    # Install virtio guest drivers
+    # ADDLOCAL is specified to workaround a bug in virtio-win-0.1.217.iso
+    # See:
+    #   - https://github.com/virtio-win/virtio-win-guest-tools-installer/issues/33
+    #   - https://github.com/virtio-win/virtio-win-pkg-scripts/issues/60
+    Start-Process msiexec -Wait -ArgumentList "/i E:\virtio-win-gt-x64.msi /qn /passive /norestart ADDLOCAL=FE_balloon_driver,FE_network_driver,FE_vioinput_driver,FE_viorng_driver,FE_vioscsi_driver,FE_vioserial_driver,FE_viostor_driver,FE_viofs_driver,FE_viogpudo_driver"
+
+    # Install qemu guest agent
+    Start-Process msiexec -Wait -ArgumentList "/i E:\guest-agent\qemu-ga-x86_64.msi /qn /passive /norestart"
+
+    # Rename cached unattend.xml to avoid it is picked up by sysprep
+    mv C:\Windows\Panther\unattend.xml C:\Windows\Panther\unattend.install.xml
+
+    # Eject CD, to avoid that the unattend.xml on the CD is picked up by sysprep
+    (New-Object -COMObject Shell.Application).NameSpace(17).ParseName("F:").InvokeVerb("Eject")
+---
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: windows10-installer
+spec:
+  params:
+    - name: winImageDownloadURL
+      description: Download URL to Windows 10 installation ISO (English United States x64 version is needed).
+      type: string
+    - name: autounattendConfigMapName
+      description: Name of the ConfigMap containing the sysprep configuration files (autounattend.xml, etc.).
+      type: string
+      default: windows10-autounattend
+    - name: virtioContainerDiskName
+      description: Reference to the containerdisk containing the virtio-win drivers ISO.
+      type: string
+      default: quay.io/kubevirt/virtio-container-disk@sha256:3e88b9bde8792ba21d6cdaad70c79d5e9b339ef676402e932c6fcc2bda100d04
+  tasks:
+    - name: create-source-dv
+      params:
+        - name: manifest
+          value: |
+            apiVersion: cdi.kubevirt.io/v1beta1
+            kind: DataVolume
+            metadata:
+              generateName: windows10-source-
+            spec:
+              storage:
+                resources:
+                  requests:
+                    storage: 7Gi
+              source:
+                http:
+                  url: $(params.winImageDownloadURL)
+      timeout: 10m
+      taskRef:
+        kind: ClusterTask
+        name: create-datavolume-from-manifest
+    - name: create-base-dv
+      params:
+        - name: manifest
+          value: |
+            apiVersion: cdi.kubevirt.io/v1beta1
+            kind: DataVolume
+            metadata:
+              generateName: windows10-base-
+            spec:
+              storage:
+                resources:
+                  requests:
+                    storage: 20Gi
+              source:
+                blank: {}
+      timeout: 10m
+      taskRef:
+        kind: ClusterTask
+        name: create-datavolume-from-manifest
+    - name: create-vm-from-manifest
+      params:
+        - name: manifest
+          value: |
+            apiVersion: kubevirt.io/v1
+            kind: VirtualMachine
+            metadata:
+              generateName: windows10-installer-
+              labels:
+                app: windows10-installer
+            spec:
+              running: false
+              template:
+                metadata:
+                  annotations:
+                    vm.kubevirt.io/os: windows10
+                  labels:
+                    kubevirt.io/domain: windows10-installer
+                spec:
+                  domain:
+                    clock:
+                      utc: {}
+                      timer:
+                        hpet:
+                          present: false
+                        pit:
+                          tickPolicy: delay
+                        rtc:
+                          tickPolicy: catchup
+                        hyperv: {}
+                    cpu:
+                      sockets: 2
+                      cores: 1
+                      threads: 1
+                    resources:
+                      requests:
+                        memory: 8Gi
+                    features:
+                      acpi: {}
+                      apic: {}
+                      hyperv:
+                        relaxed: {}
+                        vapic: {}
+                        vpindex: {}
+                        spinlocks:
+                          spinlocks: 8191
+                        synic: {}
+                        synictimer:
+                          direct: {}
+                        tlbflush: {}
+                        frequencies: {}
+                        reenlightenment: {}
+                        ipi: {}
+                        runtime: {}
+                        reset: {}
+                    devices:
+                      disks:
+                        - name: installcdrom
+                          cdrom:
+                            bus: sata
+                          bootOrder: 1
+                        - name: rootdisk
+                          disk:
+                            bus: virtio
+                          bootOrder: 2
+                        - name: virtiocontainerdisk
+                          cdrom:
+                            bus: sata
+                        - name: sysprep
+                          cdrom:
+                            bus: sata
+                      interfaces:
+                        - masquerade: {}
+                          model: e1000e
+                          name: default
+                      inputs:
+                        - type: tablet
+                          bus: usb
+                          name: tablet
+                  terminationGracePeriodSeconds: 3600
+                  volumes:
+                    - name: installcdrom
+                    - name: rootdisk
+                    - name: virtiocontainerdisk
+                      containerDisk:
+                        image: $(params.virtioContainerDiskName)
+                    - name: sysprep
+                      sysprep:
+                        configMap:
+                          name: $(params.autounattendConfigMapName)
+                  networks:
+                    - name: default
+                      pod: {}
+        - name: ownDataVolumes
+          value:
+            - "installcdrom: $(tasks.create-source-dv.results.name)"
+        - name: dataVolumes
+          value:
+            - "rootdisk: $(tasks.create-base-dv.results.name)"
+        - name: runStrategy
+          value: RerunOnFailure
+        - name: startVM
+          value: "true"
+      runAfter:
+        - create-source-dv
+        - create-base-dv
+      timeout: 10m
+      taskRef:
+        kind: ClusterTask
+        name: create-vm-from-manifest
+    - name: wait-for-vmi-status
+      params:
+        - name: vmiName
+          value: $(tasks.create-vm-from-manifest.results.name)
+        - name: successCondition
+          value: status.phase == Succeeded
+        - name: failureCondition
+          value: status.phase in (Failed, Unknown)
+      runAfter:
+        - create-vm-from-manifest
+      timeout: 2h
+      taskRef:
+        kind: ClusterTask
+        name: wait-for-vmi-status
+    - name: cleanup-vm
+      params:
+        - name: vmName
+          value: $(tasks.create-vm-from-manifest.results.name)
+        - name: delete
+          value: "true"
+      runAfter:
+        - wait-for-vmi-status
+      timeout: 10m
+      taskRef:
+        kind: ClusterTask
+        name: cleanup-vm
+  results:
+    - name: baseDvName
+      description: Name of the created base DataVolume
+      value: $(tasks.create-base-dv.results.name)
+    - name: baseDvNamespace
+      description: Namespace of the created base DataVolume
+      value: $(tasks.create-base-dv.results.namespace)
