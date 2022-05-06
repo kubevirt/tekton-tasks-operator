@@ -152,6 +152,7 @@ var _ = Describe("Tekton-tasks", func() {
 			Eventually(func() bool {
 				err := apiClient.List(ctx, liveRB,
 					client.MatchingLabels{
+						common.AppKubernetesComponentLabel: string(common.AppComponentTektonTasks),
 						common.AppKubernetesManagedByLabel: common.AppKubernetesManagedByValue,
 					},
 				)
@@ -163,7 +164,6 @@ var _ = Describe("Tekton-tasks", func() {
 				if _, ok := tektontasks.AllowedTasks[strings.TrimSuffix(rb.Name, "-task")]; !ok {
 					Expect(ok).To(BeTrue(), "only allowed role binding is deployed - "+rb.Name)
 				}
-				Expect(rb.Labels[common.AppKubernetesComponentLabel]).To(Equal(string(common.AppComponentTektonTasks)), "component label should equal")
 				Expect(rb.Labels[common.AppKubernetesManagedByLabel]).To(Equal(common.AppKubernetesManagedByValue), "managed by label should equal")
 			}
 		})
@@ -224,6 +224,7 @@ var _ = Describe("Tekton-tasks", func() {
 			Eventually(func() bool {
 				err := apiClient.List(ctx, liveRB,
 					client.MatchingLabels{
+						common.AppKubernetesComponentLabel: string(common.AppComponentTektonTasks),
 						common.AppKubernetesManagedByLabel: common.AppKubernetesManagedByValue,
 					},
 				)

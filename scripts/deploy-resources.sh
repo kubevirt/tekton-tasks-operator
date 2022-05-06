@@ -30,6 +30,9 @@ oc apply -f "https://github.com/kubevirt/containerized-data-importer/releases/do
 
 oc apply -f "https://github.com/kubevirt/containerized-data-importer/releases/download/${CDI_VERSION}/cdi-cr.yaml"
 
+# Add namespace needed for tests
+oc create namespace kubevirt-os-images
+
 # wait for tekton pipelines
 oc rollout status -n openshift-operators deployment/openshift-pipelines-operator --timeout 10m
 

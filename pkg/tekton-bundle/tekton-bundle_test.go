@@ -47,7 +47,15 @@ var _ = Describe("Tekton bundle", func() {
 		taskPath := filepath.Join(path, "test-bundle-files/test-tasks/test-tasks.yaml")
 		pipelinePath := filepath.Join(path, "test-bundle-files/test-pipelines/")
 
-		tektonObjs, err := decodeObjectsFromFiles(taskPath, pipelinePath)
+		taskFiles, err := readFile(taskPath)
+		Expect(err).ToNot(HaveOccurred())
+		pipelineFiles, err := readFolder(pipelinePath)
+		Expect(err).ToNot(HaveOccurred())
+		files := [][]byte{}
+		files = append(files, taskFiles...)
+		files = append(files, pipelineFiles...)
+
+		tektonObjs, err := decodeObjectsFromFiles(files)
 		Expect(err).ToNot(HaveOccurred(), "it should not throw error")
 		Expect(tektonObjs.ClusterTasks).To(HaveLen(numberOfClusterTasks), "number of tasks should equal")
 		Expect(tektonObjs.ServiceAccounts).To(HaveLen(numberOfServiceAccounts), "number of service accounts should equal")
