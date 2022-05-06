@@ -25,6 +25,7 @@ import (
 // +kubebuilder:rbac:groups=cdi.kubevirt.io,resources=datavolumes,verbs=*
 // +kubebuilder:rbac:groups=kubevirt.io,resources=virtualmachines/finalizers,verbs=*
 // +kubebuilder:rbac:groups=*,resources=persistentvolumeclaims,verbs=*
+// +kubebuilder:rbac:groups="",resources=pods,verbs=create
 
 const (
 	operandName      = "tekton-tasks"
