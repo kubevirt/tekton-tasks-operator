@@ -6,12 +6,6 @@ metadata:
   name: manager-role
 rules:
 - apiGroups:
-  - ""
-  resources:
-  - pods
-  verbs:
-  - create
-- apiGroups:
   - '*'
   resources:
   - configmaps
@@ -24,6 +18,18 @@ rules:
   - '*'
   resources:
   - persistentvolumeclaims
+  verbs:
+  - '*'
+- apiGroups:
+  - '*'
+  resources:
+  - pods
+  verbs:
+  - create
+- apiGroups:
+  - '*'
+  resources:
+  - secrets
   verbs:
   - '*'
 - apiGroups:

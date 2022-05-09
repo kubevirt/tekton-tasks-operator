@@ -118,6 +118,18 @@ var _ = Describe("environments", func() {
 		res := GetWaitForVMIStatusImage()
 		Expect(res).To(Equal(DefaultWaitForVMIStatusIMG), "WAIT_FOR_VMI_STATUS_IMG should equal")
 	})
+
+	It("should return correct value for GENERATE_SSH_KEYS_IMG when variable is set", func() {
+		os.Setenv(GenerateSSHKeysImageKey, testURL)
+		res := GetSSHKeysStatusImage()
+		Expect(res).To(Equal(testURL), "GENERATE_SSH_KEYS_IMG should equal")
+		os.Unsetenv(GenerateSSHKeysImageKey)
+	})
+
+	It("should return correct value for GENERATE_SSH_KEYS_IMG when variable is not set", func() {
+		res := GetSSHKeysStatusImage()
+		Expect(res).To(Equal(GenerateSSHKeysIMG), "GENERATE_SSH_KEYS_IMG should equal")
+	})
 })
 
 func TestTektonBundle(t *testing.T) {

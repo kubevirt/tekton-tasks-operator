@@ -119,7 +119,7 @@ func (r *tektonTasksReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 
 	if updated, err := updateTektonTasks(tektonRequest); updated || (err != nil) {
 		// tekton was updated, and the update will trigger reconciliation again.
-		return ctrl.Result{}, err
+		return handleError(tektonRequest, err)
 	}
 
 	if isBeingDeleted(tektonRequest.Instance) {
