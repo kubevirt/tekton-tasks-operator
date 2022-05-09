@@ -54,6 +54,7 @@ type generatorFlags struct {
 	createDatavolumeImage  string
 	copyTemplateImage      string
 	cleanupVMImage         string
+	generateSSHKeys        string
 }
 
 var (
@@ -90,6 +91,7 @@ func init() {
 	rootCmd.Flags().StringVar(&f.createVMImage, "create-vm-image", "", "Link to create-vm task image")
 	rootCmd.Flags().StringVar(&f.createDatavolumeImage, "create-datavolume-image", "", "Link to create-datavolume task image")
 	rootCmd.Flags().StringVar(&f.copyTemplateImage, "copy-template-image", "", "Link to copy-template-image task image")
+	rootCmd.Flags().StringVar(&f.generateSSHKeys, "generate-ssh-keys", "", "Link to generate-ssh-keys task image")
 	rootCmd.Flags().StringVar(&f.cleanupVMImage, "cleanup-vm-image", "", "Link to cleanup-vm-image task image")
 
 	rootCmd.Flags().BoolVar(&f.removeCerts, "webhook-remove-certs", false, "Remove the webhook certificate volume and mount")
@@ -195,6 +197,14 @@ func buildRelatedImages(flags generatorFlags) ([]interface{}, error) {
 		relatedImages = append(relatedImages, relatedImage)
 	}
 
+	if flags.generateSSHKeys != "" {
+		relatedImage, err := buildRelatedImage(flags.generateSSHKeys, "generate-ssh-keys")
+		if err != nil {
+			return nil, err
+		}
+		relatedImages = append(relatedImages, relatedImage)
+	}
+
 	if flags.createDatavolumeImage != "" {
 		relatedImage, err := buildRelatedImage(flags.createDatavolumeImage, "create-datavolume-from-manifest")
 		if err != nil {
@@ -205,6 +215,12 @@ func buildRelatedImages(flags generatorFlags) ([]interface{}, error) {
 
 	if flags.createVMImage != "" {
 		relatedImage, err := buildRelatedImage(flags.createVMImage, "create-vm-from-manifest")
+		if err != nil {
+			return nil, err
+		}
+		relatedImages = append(relatedImages, relatedImage)
+
+		relatedImage, err = buildRelatedImage(flags.createVMImage, "create-vm-from-template")
 		if err != nil {
 			return nil, err
 		}
@@ -311,6 +327,10 @@ func updateContainerEnvVars(flags generatorFlags, container v1.Container) []v1.E
 		case environment.WaitForVMISTatusImageKey:
 			if flags.waitForVMIStatusImage != "" {
 				envVariable.Value = flags.waitForVMIStatusImage
+			}
+		case environment.GenerateSSHKeysImageKey:
+			if flags.generateSSHKeys != "" {
+				envVariable.Value = flags.generateSSHKeys
 			}
 		}
 

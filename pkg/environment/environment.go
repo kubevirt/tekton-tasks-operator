@@ -32,6 +32,7 @@ const (
 	DiskVirtSysprepImageKey   = "DISK_VIRT_SYSPREP_IMG"
 	ModifyVMTemplateImageKey  = "MODIFY_VM_TEMPLATE_IMG"
 	WaitForVMISTatusImageKey  = "WAIT_FOR_VMI_STATUS_IMG"
+	GenerateSSHKeysImageKey   = "GENERATE_SSH_KEYS_IMG"
 
 	DefaultWaitForVMIStatusIMG  = "quay.io/kubevirt/tekton-task-wait-for-vmi-status:" + operands.TektonTasksVersion
 	DeafultModifyVMTemplateIMG  = "quay.io/kubevirt/tekton-task-modify-vm-template:" + operands.TektonTasksVersion
@@ -41,9 +42,15 @@ const (
 	DeafultCreateDatavolumeIMG  = "quay.io/openshift/origin-cli:4.8"
 	DeafultCopyTemplateIMG      = "quay.io/kubevirt/tekton-task-copy-template:" + operands.TektonTasksVersion
 	DeafultCleanupVMIMG         = "quay.io/kubevirt/tekton-task-execute-in-vm:" + operands.TektonTasksVersion
+	GenerateSSHKeysIMG          = "quay.io/kubevirt/tekton-task-generate-ssh-keys:" + operands.TektonTasksVersion
 
 	defaultOperatorVersion = "devel"
 )
+
+// GetSSHKeysStatusImage returns generate-ssh-keys task image url
+func GetSSHKeysStatusImage() string {
+	return EnvOrDefault(GenerateSSHKeysImageKey, GenerateSSHKeysIMG)
+}
 
 // GetWaitForVMIStatusImage returns wait-for-vmi-status task image url
 func GetWaitForVMIStatusImage() string {

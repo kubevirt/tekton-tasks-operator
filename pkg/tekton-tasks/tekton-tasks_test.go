@@ -11,7 +11,6 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	pipeline "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
-	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"
 	rbac "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -37,10 +36,10 @@ var _ = Describe("environments", func() {
 
 	It("New function should return object with correct tasks", func() {
 		res := New(getMockedTestBundle())
-		Expect(len(res.clusterTasks)).To(Equal(8), "should return correct number of tasks")
-		Expect(len(res.serviceAccounts)).To(Equal(8), "should return correct number of service accounts")
-		Expect(len(res.roleBindings)).To(Equal(8), "should return correct number of role bindings")
-		Expect(len(res.clusterRoles)).To(Equal(8), "should return correct number of cluster roles")
+		Expect(len(res.clusterTasks)).To(Equal(11), "should return correct number of tasks")
+		Expect(len(res.serviceAccounts)).To(Equal(11), "should return correct number of service accounts")
+		Expect(len(res.roleBindings)).To(Equal(11), "should return correct number of role bindings")
+		Expect(len(res.clusterRoles)).To(Equal(11), "should return correct number of cluster roles")
 		for _, task := range res.clusterTasks {
 			if _, ok := AllowedTasks[task.Name]; !ok {
 				Expect(ok).To(BeTrue(), "only allowed task is deployed - "+task.Name)
@@ -136,7 +135,7 @@ func getMockedTektonTasksOperand() *tektonTasks {
 				Spec: pipeline.TaskSpec{
 					Steps: []pipeline.Step{
 						{
-							Container: corev1.Container{
+							Container: v1.Container{
 								Name: "test",
 							},
 						},
@@ -150,7 +149,7 @@ func getMockedTektonTasksOperand() *tektonTasks {
 				Spec: pipeline.TaskSpec{
 					Steps: []pipeline.Step{
 						{
-							Container: corev1.Container{
+							Container: v1.Container{
 								Name: "test",
 							},
 						},
@@ -204,7 +203,7 @@ func getMockedTestBundle() *tektonbundle.Bundle {
 				Spec: pipeline.TaskSpec{
 					Steps: []pipeline.Step{
 						{
-							Container: corev1.Container{
+							Container: v1.Container{
 								Name: "test",
 							},
 						},
@@ -224,7 +223,7 @@ func getMockedTestBundle() *tektonbundle.Bundle {
 				},
 			}, {
 				ObjectMeta: metav1.ObjectMeta{
-					Name: createVMTaskName,
+					Name: createVMFromManifestTaskName,
 				},
 			}, {
 				ObjectMeta: metav1.ObjectMeta{
@@ -241,6 +240,18 @@ func getMockedTestBundle() *tektonbundle.Bundle {
 			}, {
 				ObjectMeta: metav1.ObjectMeta{
 					Name: modifyTemplateTaskName,
+				},
+			}, {
+				ObjectMeta: metav1.ObjectMeta{
+					Name: generateSSHKeysTaskName,
+				},
+			}, {
+				ObjectMeta: metav1.ObjectMeta{
+					Name: createVMFromManifestTaskName,
+				},
+			}, {
+				ObjectMeta: metav1.ObjectMeta{
+					Name: executeInVMTaskName,
 				},
 			},
 		},
@@ -263,7 +274,7 @@ func getMockedTestBundle() *tektonbundle.Bundle {
 				},
 			}, {
 				ObjectMeta: metav1.ObjectMeta{
-					Name: createVMTaskName + "-task",
+					Name: createVMFromManifestTaskName + "-task",
 				},
 			}, {
 				ObjectMeta: metav1.ObjectMeta{
@@ -280,6 +291,18 @@ func getMockedTestBundle() *tektonbundle.Bundle {
 			}, {
 				ObjectMeta: metav1.ObjectMeta{
 					Name: modifyTemplateTaskName + "-task",
+				},
+			}, {
+				ObjectMeta: metav1.ObjectMeta{
+					Name: generateSSHKeysTaskName + "-task",
+				},
+			}, {
+				ObjectMeta: metav1.ObjectMeta{
+					Name: createVMFromManifestTaskName + "-task",
+				},
+			}, {
+				ObjectMeta: metav1.ObjectMeta{
+					Name: executeInVMTaskName + "-task",
 				},
 			},
 		},
@@ -302,7 +325,7 @@ func getMockedTestBundle() *tektonbundle.Bundle {
 				},
 			}, {
 				ObjectMeta: metav1.ObjectMeta{
-					Name: createVMTaskName + "-task",
+					Name: createVMFromManifestTaskName + "-task",
 				},
 			}, {
 				ObjectMeta: metav1.ObjectMeta{
@@ -319,6 +342,18 @@ func getMockedTestBundle() *tektonbundle.Bundle {
 			}, {
 				ObjectMeta: metav1.ObjectMeta{
 					Name: modifyTemplateTaskName + "-task",
+				},
+			}, {
+				ObjectMeta: metav1.ObjectMeta{
+					Name: generateSSHKeysTaskName + "-task",
+				},
+			}, {
+				ObjectMeta: metav1.ObjectMeta{
+					Name: createVMFromManifestTaskName + "-task",
+				},
+			}, {
+				ObjectMeta: metav1.ObjectMeta{
+					Name: executeInVMTaskName + "-task",
 				},
 			},
 		},
@@ -341,7 +376,7 @@ func getMockedTestBundle() *tektonbundle.Bundle {
 				},
 			}, {
 				ObjectMeta: metav1.ObjectMeta{
-					Name: createVMTaskName + "-task",
+					Name: createVMFromManifestTaskName + "-task",
 				},
 			}, {
 				ObjectMeta: metav1.ObjectMeta{
@@ -358,6 +393,18 @@ func getMockedTestBundle() *tektonbundle.Bundle {
 			}, {
 				ObjectMeta: metav1.ObjectMeta{
 					Name: modifyTemplateTaskName + "-task",
+				},
+			}, {
+				ObjectMeta: metav1.ObjectMeta{
+					Name: generateSSHKeysTaskName + "-task",
+				},
+			}, {
+				ObjectMeta: metav1.ObjectMeta{
+					Name: createVMFromManifestTaskName + "-task",
+				},
+			}, {
+				ObjectMeta: metav1.ObjectMeta{
+					Name: executeInVMTaskName + "-task",
 				},
 			},
 		},

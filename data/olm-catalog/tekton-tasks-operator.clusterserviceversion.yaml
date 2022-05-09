@@ -63,6 +63,18 @@ spec:
           verbs:
           - '*'
         - apiGroups:
+          - '*'
+          resources:
+          - pods
+          verbs:
+          - create
+        - apiGroups:
+          - '*'
+          resources:
+          - secrets
+          verbs:
+          - '*'
+        - apiGroups:
           - apiextensions.k8s.io
           resources:
           - customresourcedefinitions
@@ -198,6 +210,7 @@ spec:
           - get
           - list
           - patch
+          - update
           - watch
         serviceAccountName: tekton-tasks-operator
       deployments:
@@ -232,6 +245,7 @@ spec:
                 - name: DISK_VIRT_SYSPREP_IMG
                 - name: MODIFY_VM_TEMPLATE_IMG
                 - name: WAIT_FOR_VMI_STATUS_IMG
+                - name: GENERATE_SSH_KEYS_IMG
                 - name: OPERATOR_NAMESPACE
                   valueFrom:
                     fieldRef:

@@ -25,33 +25,40 @@ import (
 // +kubebuilder:rbac:groups=cdi.kubevirt.io,resources=datavolumes,verbs=*
 // +kubebuilder:rbac:groups=kubevirt.io,resources=virtualmachines/finalizers,verbs=*
 // +kubebuilder:rbac:groups=*,resources=persistentvolumeclaims,verbs=*
-// +kubebuilder:rbac:groups="",resources=pods,verbs=create
+// +kubebuilder:rbac:groups=*,resources=pods,verbs=create
+// +kubebuilder:rbac:groups=*,resources=secrets,verbs=*
 
 const (
 	operandName      = "tekton-tasks"
 	operandComponent = common.AppComponentTektonTasks
 
-	cleanVMTaskName           = "cleanup-vm"
-	copyTemplateTaskName      = "copy-template"
-	datavolumeTaskName        = "create-datavolume-from-manifest"
-	createVMTaskName          = "create-vm-from-template"
-	diskVirtCustomizeTaskName = "disk-virt-customize"
-	diskVirtSysprepTaskName   = "disk-virt-sysprep"
-	modifyTemplateTaskName    = "modify-vm-template"
-	waitForVMITaskName        = "wait-for-vmi-status"
+	cleanVMTaskName              = "cleanup-vm"
+	copyTemplateTaskName         = "copy-template"
+	datavolumeTaskName           = "create-datavolume-from-manifest"
+	createVMFromTemplateTaskName = "create-vm-from-template"
+	diskVirtCustomizeTaskName    = "disk-virt-customize"
+	diskVirtSysprepTaskName      = "disk-virt-sysprep"
+	modifyTemplateTaskName       = "modify-vm-template"
+	waitForVMITaskName           = "wait-for-vmi-status"
+	createVMFromManifestTaskName = "create-vm-from-manifest"
+	generateSSHKeysTaskName      = "generate-ssh-keys"
+	executeInVMTaskName          = "execute-in-vm"
 )
 
 var requiredCRDs = []string{"tasks.tekton.dev"}
 
 var AllowedTasks = map[string]func() string{
-	cleanVMTaskName:           environment.GetCleanupVMImage,
-	copyTemplateTaskName:      environment.GetCopyTemplateImage,
-	datavolumeTaskName:        environment.GetCreateDatavolumeImage,
-	createVMTaskName:          environment.GetCreateVMImage,
-	diskVirtCustomizeTaskName: environment.GetDiskVirtCustomizeImage,
-	diskVirtSysprepTaskName:   environment.GetDiskVirtSysprepImage,
-	modifyTemplateTaskName:    environment.GetModifyVMTemplateImage,
-	waitForVMITaskName:        environment.GetWaitForVMIStatusImage,
+	createVMFromManifestTaskName: environment.GetCreateVMImage,
+	cleanVMTaskName:              environment.GetCleanupVMImage,
+	copyTemplateTaskName:         environment.GetCopyTemplateImage,
+	datavolumeTaskName:           environment.GetCreateDatavolumeImage,
+	createVMFromTemplateTaskName: environment.GetCreateVMImage,
+	diskVirtCustomizeTaskName:    environment.GetDiskVirtCustomizeImage,
+	diskVirtSysprepTaskName:      environment.GetDiskVirtSysprepImage,
+	modifyTemplateTaskName:       environment.GetModifyVMTemplateImage,
+	waitForVMITaskName:           environment.GetWaitForVMIStatusImage,
+	generateSSHKeysTaskName:      environment.GetSSHKeysStatusImage,
+	executeInVMTaskName:          environment.GetCleanupVMImage,
 }
 
 func init() {
