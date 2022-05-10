@@ -1,0 +1,380 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: windows10-sqlserver
+data:
+  unattend.xml: |
+    <?xml version="1.0" encoding="utf-8"?>
+    <unattend xmlns="urn:schemas-microsoft-com:unattend" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State">
+      <settings pass="specialize">
+        <component name="Microsoft-Windows-International-Core" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS">
+          <InputLocale>0409:00000409</InputLocale>
+          <SystemLocale>en-US</SystemLocale>
+          <UILanguage>en-US</UILanguage>
+          <UserLocale>en-US</UserLocale>
+        </component>
+      </settings>
+      <settings pass="oobeSystem">
+        <component name="Microsoft-Windows-Deployment" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS">
+          <Reseal>
+            <Mode>Audit</Mode>
+          </Reseal>
+        </component>
+      </settings>
+      <settings pass="auditUser">
+        <component name="Microsoft-Windows-Deployment" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS">
+          <RunSynchronous>
+            <RunSynchronousCommand wcm:action="add">
+              <Order>1</Order>
+              <Path>PowerShell -ExecutionPolicy Bypass -NoProfile D:\sqlserver-install.ps1</Path>
+              <Description>Run sqlserver-install script</Description>
+            </RunSynchronousCommand>
+          </RunSynchronous>
+          <Generalize>
+            <ForceShutdownNow>true</ForceShutdownNow>
+            <Mode>OOBE</Mode>
+          </Generalize>
+        </component>
+      </settings>
+    </unattend>
+  sqlserver-install.ps1: |
+    # Download SQL server
+    $url = "https://go.microsoft.com/fwlink/?linkid=866658"
+    $setupPath = "C:\SQL2019-SSEI-Expr.exe"
+    Invoke-WebRequest -Uri $url -OutFile $setupPath
+
+    # Install SQL server
+    Start-Process $setupPath -Wait -ArgumentList "/ACTION=INSTALL /IACCEPTSQLSERVERLICENSETERMS /QUIET"
+
+    # Rename cached unattend.xml to avoid it is picked up by sysprep
+    mv C:\Windows\Panther\unattend.xml C:\Windows\Panther\unattend.sqlserver.xml
+
+    # Eject CD, to avoid that the unattend.xml on the CD is picked up by sysprep
+    (New-Object -COMObject Shell.Application).NameSpace(17).ParseName("D:").InvokeVerb("Eject")
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: windows10-unattend
+data:
+  unattend.xml: |
+    <?xml version="1.0" encoding="utf-8"?>
+    <unattend xmlns="urn:schemas-microsoft-com:unattend" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State">
+      <settings pass="specialize">
+        <component name="Microsoft-Windows-International-Core" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS">
+          <InputLocale>0409:00000409</InputLocale>
+          <SystemLocale>en-US</SystemLocale>
+          <UILanguage>en-US</UILanguage>
+          <UserLocale>en-US</UserLocale>
+        </component>
+        <component name="Microsoft-Windows-Deployment" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS">
+          <ExtendOSPartition>
+            <Extend>true</Extend>
+          </ExtendOSPartition>
+        </component>
+        <component name="Microsoft-Windows-Security-SPP-UX" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS">
+          <SkipAutoActivation>true</SkipAutoActivation>
+        </component>
+        <component name="Microsoft-Windows-SQMApi" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS">
+          <CEIPEnabled>0</CEIPEnabled>
+        </component>
+      </settings>
+      <settings pass="oobeSystem">
+        <component name="Microsoft-Windows-International-Core" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS">
+          <InputLocale>0409:00000409</InputLocale>
+          <SystemLocale>en-US</SystemLocale>
+          <UILanguage>en-US</UILanguage>
+          <UserLocale>en-US</UserLocale>
+        </component>
+        <component name="Microsoft-Windows-Shell-Setup" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS">
+          <OOBE>
+            <HideEULAPage>true</HideEULAPage>
+            <HideLocalAccountScreen>true</HideLocalAccountScreen>
+            <HideOnlineAccountScreens>true</HideOnlineAccountScreens>
+            <HideWirelessSetupInOOBE>true</HideWirelessSetupInOOBE>
+            <ProtectYourPC>3</ProtectYourPC>
+            <NetworkLocation>Other</NetworkLocation>
+          </OOBE>
+          <TimeZone>UTC</TimeZone>
+          <UserAccounts>
+            <AdministratorPassword>
+              <Value>password</Value>
+              <PlainText>true</PlainText>
+            </AdministratorPassword>
+          </UserAccounts>
+          <AutoLogon>
+            <Password>
+              <Value>password</Value>
+              <PlainText>true</PlainText>
+            </Password>
+            <Username>Administrator</Username>
+            <Enabled>true</Enabled>
+            <LogonCount>1</LogonCount>
+          </AutoLogon>
+          <FirstLogonCommands>
+            <SynchronousCommand wcm:action="add">
+              <CommandLine>reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon" /v AutoLogonCount /t REG_DWORD /d 0 /f</CommandLine>
+              <RequiresUserInput>false</RequiresUserInput>
+              <Order>1</Order>
+              <Description>Set AutoLogonCount to 0</Description>
+            </SynchronousCommand>
+          </FirstLogonCommands>
+        </component>
+      </settings>
+    </unattend>
+---
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: windows10-customize
+spec:
+  params:
+    - name: sourceTemplateName
+      description: Name of the Template which is used to customize Windows 10 and create a golden Template. The default boot source of this template needs to be available.
+      type: string
+      default: windows10-desktop-large
+    - name: sourceTemplateNamespace
+      description: Namespace of the Template which is used to customize Windows 10 and create a golden Template. The default boot source of this template needs to be available.
+      type: string
+      default: openshift
+    - name: customizeConfigMapName
+      description: Name of the ConfigMap containing the customization and sysprep configuration files (unattend.xml, etc.).
+      type: string
+      default: windows10-sqlserver
+    - name: customizeTemplateName
+      description: Name of the customize Template which is created. A VM created from this template is used to customize Windows 10.
+      type: string
+      default: windows10-desktop-large-customize-sqlserver
+    - name: allowReplaceCustomizationTemplate
+      description: Allow to replace an already existing customize Template.
+      type: string
+      default: "false"
+    - name: goldenTemplateName
+      description: Name of the golden Template which is created. Pre-installed Windows VMs can be created from this template.
+      type: string
+      default: windows10-desktop-large-golden-sqlserver
+    - name: allowReplaceGoldenTemplate
+      description: Allow to replace an already existing golden Template.
+      type: string
+      default: "false"
+  tasks:
+    - name: copy-template-customize
+      params:
+        - name: sourceTemplateName
+          value: $(params.sourceTemplateName)
+        - name: sourceTemplateNamespace
+          value: $(params.sourceTemplateNamespace)
+        - name: targetTemplateName
+          value: $(params.customizeTemplateName)
+        - name: allowReplace
+          value: $(params.allowReplaceCustomizationTemplate)
+      timeout: 10m
+      taskRef:
+        kind: ClusterTask
+        name: copy-template
+    - name: modify-vm-template-customize
+      params:
+        - name: templateName
+          value: $(tasks.copy-template-customize.results.name)
+        - name: templateAnnotations
+          value:
+            - "openshift.io/display-name: Microsoft Windows 10 Customize VM"
+            - "description: Template for customizing Microsoft Windows 10."
+        - name: deleteDatavolumeTemplate
+          value: "true"
+        - name: datavolumeTemplates
+          value:
+            - |
+              {
+                "apiVersion": "cdi.kubevirt.io/v1beta1",
+                "kind": "DataVolume",
+                "metadata": {
+                    "name": "${NAME}"
+                },
+                "spec": {
+                  "storage": {
+                    "resources": {
+                      "requests": {
+                        "storage": "20Gi"
+                      }
+                    }
+                  },
+                  "sourceRef": {
+                    "kind": "DataSource",
+                    "name": "${DATA_SOURCE_NAME}",
+                    "namespace": "${DATA_SOURCE_NAMESPACE}"
+                  }
+                }
+              }
+        - name: disks
+          value:
+            - '{"name": "rootdisk", "disk": {"bus": "virtio"}}'
+            - '{"name": "sysprep", "cdrom": {"bus": "sata"}}'
+        - name: volumes
+          value:
+            - '{"name": "rootdisk", "dataVolume": {"name": "${NAME}"}}'
+            - '{"name": "sysprep", "sysprep": {"configMap": {"name": "$(params.customizeConfigMapName)"}}}'
+      runAfter:
+        - copy-template-customize
+      timeout: 10m
+      taskRef:
+        kind: ClusterTask
+        name: modify-vm-template
+    - name: create-vm-from-template
+      params:
+        - name: templateName
+          value: $(tasks.modify-vm-template-customize.results.name)
+        - name: runStrategy
+          value: RerunOnFailure
+        - name: startVM
+          value: "true"
+      runAfter:
+        - modify-vm-template-customize
+      timeout: 10m
+      taskRef:
+        kind: ClusterTask
+        name: create-vm-from-template
+    - name: wait-for-vmi-status
+      params:
+        - name: vmiName
+          value: $(tasks.create-vm-from-template.results.name)
+        - name: successCondition
+          value: status.phase == Succeeded
+        - name: failureCondition
+          value: status.phase in (Failed, Unknown)
+      runAfter:
+        - create-vm-from-template
+      timeout: 2h
+      taskRef:
+        kind: ClusterTask
+        name: wait-for-vmi-status
+    - name: create-base-dv
+      params:
+        - name: manifest
+          value: |
+            apiVersion: cdi.kubevirt.io/v1beta1
+            kind: DataVolume
+            metadata:
+              generateName: windows10-base-
+              annotations:
+                cdi.kubevirt.io/storage.bind.immediate.requested: \"true\"
+            spec:
+              storage:
+                resources:
+                  requests:
+                    storage: 20Gi
+              source:
+                pvc:
+                  name: $(tasks.create-vm-from-template.results.name)
+                  namespace: $(tasks.create-vm-from-template.results.namespace)
+        - name: waitForSuccess
+          value: "true"
+      runAfter:
+        - wait-for-vmi-status
+      timeout: 1h
+      taskRef:
+        kind: ClusterTask
+        name: create-datavolume-from-manifest
+    - name: cleanup-vm
+      params:
+        - name: vmName
+          value: $(tasks.create-vm-from-template.results.name)
+        - name: delete
+          value: "true"
+      runAfter:
+        - create-base-dv
+      timeout: 10m
+      taskRef:
+        kind: ClusterTask
+        name: cleanup-vm
+    - name: copy-template-golden
+      params:
+        - name: sourceTemplateName
+          value: $(params.sourceTemplateName)
+        - name: sourceTemplateNamespace
+          value: $(params.sourceTemplateNamespace)
+        - name: targetTemplateName
+          value: $(params.goldenTemplateName)
+        - name: allowReplace
+          value: $(params.allowReplaceGoldenTemplate)
+      runAfter:
+        - create-base-dv
+      timeout: 10m
+      taskRef:
+        kind: ClusterTask
+        name: copy-template
+    - name: modify-vm-template-golden
+      params:
+        - name: templateName
+          value: $(tasks.copy-template-golden.results.name)
+        - name: templateAnnotations
+          value:
+            - "openshift.io/display-name: Microsoft Windows 10 Customized VM Golden"
+            - "description: Template for creating customized Microsoft Windows 10 VMs."
+        - name: deleteDatavolumeTemplate
+          value: "true"
+        - name: datavolumeTemplates
+          value:
+            - |
+              {
+                "apiVersion": "cdi.kubevirt.io/v1beta1",
+                "kind": "DataVolume",
+                "metadata": {
+                    "name": "${NAME}"
+                },
+                "spec": {
+                  "storage": {
+                    "resources": {
+                      "requests": {
+                        "storage": "60Gi"
+                      }
+                    }
+                  },
+                  "source": {
+                    "pvc": {
+                      "name": "$(tasks.create-base-dv.results.name)",
+                      "namespace": "$(tasks.create-base-dv.results.namespace)"
+                    }
+                  }
+                }
+              }
+        - name: deleteDisks
+          value: "true"
+        - name: disks
+          value:
+            - '{"name": "rootdisk", "disk": {"bus": "virtio"}}'
+        - name: deleteVolumes
+          value: "true"
+        - name: volumes
+          value:
+            - '{"name": "rootdisk", "dataVolume": {"name": "${NAME}"}}'
+        - name: deleteTemplateParameters
+          value: "true"
+        - name: templateParameters
+          value:
+            - '{"name": "NAME", "description": "VM name", "generate": "expression", "from": "windows-[a-z0-9]{6}"}'
+      runAfter:
+        - copy-template-golden
+      timeout: 10m
+      taskRef:
+        kind: ClusterTask
+        name: modify-vm-template
+  results:
+    - name: customizeTemplateName
+      description: Name of the created customize Template
+      value: $(tasks.copy-template-customize.results.name)
+    - name: customizeTemplateNamespace
+      description: Namespace of the created customize Template
+      value: $(tasks.copy-template-customize.results.namespace)
+    - name: baseDvName
+      description: Name of the created base DataVolume
+      value: $(tasks.create-base-dv.results.name)
+    - name: baseDvNamespace
+      description: Namespace of the created base DataVolume
+      value: $(tasks.create-base-dv.results.namespace)
+    - name: goldenTemplateName
+      description: Name of the created golden Template
+      value: $(tasks.copy-template-golden.results.name)
+    - name: goldenTemplateNamespace
+      description: Namespace of the created golden Template
+      value: $(tasks.copy-template-golden.results.namespace)

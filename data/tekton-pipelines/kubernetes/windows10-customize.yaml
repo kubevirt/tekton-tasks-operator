@@ -1,0 +1,289 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: windows10-sqlserver
+data:
+  unattend.xml: |
+    <?xml version="1.0" encoding="utf-8"?>
+    <unattend xmlns="urn:schemas-microsoft-com:unattend" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State">
+      <settings pass="specialize">
+        <component name="Microsoft-Windows-International-Core" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS">
+          <InputLocale>0409:00000409</InputLocale>
+          <SystemLocale>en-US</SystemLocale>
+          <UILanguage>en-US</UILanguage>
+          <UserLocale>en-US</UserLocale>
+        </component>
+      </settings>
+      <settings pass="oobeSystem">
+        <component name="Microsoft-Windows-Deployment" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS">
+          <Reseal>
+            <Mode>Audit</Mode>
+          </Reseal>
+        </component>
+      </settings>
+      <settings pass="auditUser">
+        <component name="Microsoft-Windows-Deployment" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS">
+          <RunSynchronous>
+            <RunSynchronousCommand wcm:action="add">
+              <Order>1</Order>
+              <Path>PowerShell -ExecutionPolicy Bypass -NoProfile D:\sqlserver-install.ps1</Path>
+              <Description>Run sqlserver-install script</Description>
+            </RunSynchronousCommand>
+          </RunSynchronous>
+          <Generalize>
+            <ForceShutdownNow>true</ForceShutdownNow>
+            <Mode>OOBE</Mode>
+          </Generalize>
+        </component>
+      </settings>
+    </unattend>
+  sqlserver-install.ps1: |
+    # Download SQL server
+    $url = "https://go.microsoft.com/fwlink/?linkid=866658"
+    $setupPath = "C:\SQL2019-SSEI-Expr.exe"
+    Invoke-WebRequest -Uri $url -OutFile $setupPath
+
+    # Install SQL server
+    Start-Process $setupPath -Wait -ArgumentList "/ACTION=INSTALL /IACCEPTSQLSERVERLICENSETERMS /QUIET"
+
+    # Rename cached unattend.xml to avoid it is picked up by sysprep
+    mv C:\Windows\Panther\unattend.xml C:\Windows\Panther\unattend.sqlserver.xml
+
+    # Eject CD, to avoid that the unattend.xml on the CD is picked up by sysprep
+    (New-Object -COMObject Shell.Application).NameSpace(17).ParseName("D:").InvokeVerb("Eject")
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: windows10-unattend
+data:
+  unattend.xml: |
+    <?xml version="1.0" encoding="utf-8"?>
+    <unattend xmlns="urn:schemas-microsoft-com:unattend" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State">
+      <settings pass="specialize">
+        <component name="Microsoft-Windows-International-Core" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS">
+          <InputLocale>0409:00000409</InputLocale>
+          <SystemLocale>en-US</SystemLocale>
+          <UILanguage>en-US</UILanguage>
+          <UserLocale>en-US</UserLocale>
+        </component>
+        <component name="Microsoft-Windows-Deployment" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS">
+          <ExtendOSPartition>
+            <Extend>true</Extend>
+          </ExtendOSPartition>
+        </component>
+        <component name="Microsoft-Windows-Security-SPP-UX" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS">
+          <SkipAutoActivation>true</SkipAutoActivation>
+        </component>
+        <component name="Microsoft-Windows-SQMApi" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS">
+          <CEIPEnabled>0</CEIPEnabled>
+        </component>
+      </settings>
+      <settings pass="oobeSystem">
+        <component name="Microsoft-Windows-International-Core" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS">
+          <InputLocale>0409:00000409</InputLocale>
+          <SystemLocale>en-US</SystemLocale>
+          <UILanguage>en-US</UILanguage>
+          <UserLocale>en-US</UserLocale>
+        </component>
+        <component name="Microsoft-Windows-Shell-Setup" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS">
+          <OOBE>
+            <HideEULAPage>true</HideEULAPage>
+            <HideLocalAccountScreen>true</HideLocalAccountScreen>
+            <HideOnlineAccountScreens>true</HideOnlineAccountScreens>
+            <HideWirelessSetupInOOBE>true</HideWirelessSetupInOOBE>
+            <ProtectYourPC>3</ProtectYourPC>
+            <NetworkLocation>Other</NetworkLocation>
+          </OOBE>
+          <TimeZone>UTC</TimeZone>
+          <UserAccounts>
+            <AdministratorPassword>
+              <Value>password</Value>
+              <PlainText>true</PlainText>
+            </AdministratorPassword>
+          </UserAccounts>
+          <AutoLogon>
+            <Password>
+              <Value>password</Value>
+              <PlainText>true</PlainText>
+            </Password>
+            <Username>Administrator</Username>
+            <Enabled>true</Enabled>
+            <LogonCount>1</LogonCount>
+          </AutoLogon>
+          <FirstLogonCommands>
+            <SynchronousCommand wcm:action="add">
+              <CommandLine>reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon" /v AutoLogonCount /t REG_DWORD /d 0 /f</CommandLine>
+              <RequiresUserInput>false</RequiresUserInput>
+              <Order>1</Order>
+              <Description>Set AutoLogonCount to 0</Description>
+            </SynchronousCommand>
+          </FirstLogonCommands>
+        </component>
+      </settings>
+    </unattend>
+---
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: windows10-customize
+spec:
+  params:
+    - name: sourceDataVolumeName
+      description: Name of the DataVolume which is used to customize Windows 10 and create a new base DataVolume.
+      type: string
+    - name: sourceDataVolumeNamespace
+      description: Namespace of the DataVolume which is used to customize Windows 10 and create a new base DataVolume.
+      type: string
+    - name: customizeConfigMapName
+      description: Name of the ConfigMap containing the customization and sysprep configuration files (unattend.xml, etc.).
+      type: string
+      default: windows10-sqlserver
+  tasks:
+    - name: create-base-dv
+      params:
+        - name: manifest
+          value: |
+            apiVersion: cdi.kubevirt.io/v1beta1
+            kind: DataVolume
+            metadata:
+              generateName: windows10-base-
+            spec:
+              storage:
+                resources:
+                  requests:
+                    storage: 20Gi
+              source:
+                pvc:
+                  name: $(params.sourceDataVolumeName)
+                  namespace: $(params.sourceDataVolumeNamespace)
+      timeout: 10m
+      taskRef:
+        kind: ClusterTask
+        name: create-datavolume-from-manifest
+    - name: create-vm-from-manifest
+      params:
+        - name: manifest
+          value: |
+            apiVersion: kubevirt.io/v1
+            kind: VirtualMachine
+            metadata:
+              generateName: windows10-customize-
+              labels:
+                app: windows10-customize
+            spec:
+              running: false
+              template:
+                metadata:
+                  annotations:
+                    vm.kubevirt.io/os: windows10
+                  labels:
+                    kubevirt.io/domain: windows10-customize
+                spec:
+                  domain:
+                    clock:
+                      utc: {}
+                      timer:
+                        hpet:
+                          present: false
+                        pit:
+                          tickPolicy: delay
+                        rtc:
+                          tickPolicy: catchup
+                        hyperv: {}
+                    cpu:
+                      sockets: 2
+                      cores: 1
+                      threads: 1
+                    resources:
+                      requests:
+                        memory: 8Gi
+                    features:
+                      acpi: {}
+                      apic: {}
+                      hyperv:
+                        relaxed: {}
+                        vapic: {}
+                        vpindex: {}
+                        spinlocks:
+                          spinlocks: 8191
+                        synic: {}
+                        synictimer:
+                          direct: {}
+                        tlbflush: {}
+                        frequencies: {}
+                        reenlightenment: {}
+                        ipi: {}
+                        runtime: {}
+                        reset: {}
+                    devices:
+                      disks:
+                        - name: rootdisk
+                          disk:
+                            bus: virtio
+                          bootOrder: 2
+                        - name: sysprep
+                          cdrom:
+                            bus: sata
+                      interfaces:
+                        - masquerade: {}
+                          model: e1000e
+                          name: default
+                      inputs:
+                        - type: tablet
+                          bus: usb
+                          name: tablet
+                  terminationGracePeriodSeconds: 3600
+                  volumes:
+                    - name: rootdisk
+                    - name: sysprep
+                      sysprep:
+                        configMap:
+                          name: $(params.customizeConfigMapName)
+                  networks:
+                    - name: default
+                      pod: {}
+        - name: dataVolumes
+          value:
+            - "rootdisk: $(tasks.create-base-dv.results.name)"
+        - name: startVM
+          value: "true"
+      runAfter:
+        - create-base-dv
+      timeout: 10m
+      taskRef:
+        kind: ClusterTask
+        name: create-vm-from-manifest
+    - name: wait-for-vmi-status
+      params:
+        - name: vmiName
+          value: $(tasks.create-vm-from-manifest.results.name)
+        - name: successCondition
+          value: status.phase == Succeeded
+        - name: failureCondition
+          value: status.phase in (Failed, Unknown)
+      runAfter:
+        - create-vm-from-template
+      timeout: 2h
+      taskRef:
+        kind: ClusterTask
+        name: wait-for-vmi-status
+    - name: cleanup-vm
+      params:
+        - name: vmName
+          value: $(tasks.create-vm-from-manifest.results.name)
+        - name: delete
+          value: "true"
+      runAfter:
+        - wait-for-vmi-status
+      timeout: 10m
+      taskRef:
+        kind: ClusterTask
+        name: cleanup-vm
+  results:
+    - name: baseDvName
+      description: Name of the created base DataVolume
+      value: $(tasks.create-base-dv.results.name)
+    - name: baseDvNamespace
+      description: Namespace of the created base DataVolume
+      value: $(tasks.create-base-dv.results.namespace)
