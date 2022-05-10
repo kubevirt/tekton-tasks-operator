@@ -112,9 +112,7 @@ func (r *tektonTasksReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 
 	if !isInitialized(tektonRequest.Instance) {
 		err := initialize(tektonRequest)
-		// No need to requeue here, because
-		// the update will trigger reconciliation again
-		return ctrl.Result{}, err
+		return handleError(tektonRequest, err)
 	}
 
 	if updated, err := updateTektonTasks(tektonRequest); updated || (err != nil) {
