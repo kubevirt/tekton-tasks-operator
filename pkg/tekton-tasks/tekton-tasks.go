@@ -95,14 +95,13 @@ func (t *tektonTasks) WatchClusterTypes() []client.Object {
 	return []client.Object{
 		&rbac.ClusterRole{},
 		&pipeline.ClusterTask{},
+		&rbac.RoleBinding{},
+		&v1.ServiceAccount{},
 	}
 }
 
 func (t *tektonTasks) WatchTypes() []client.Object {
-	return []client.Object{
-		&rbac.RoleBinding{},
-		&v1.ServiceAccount{},
-	}
+	return nil
 }
 
 func (t *tektonTasks) RequiredCrds() []string {

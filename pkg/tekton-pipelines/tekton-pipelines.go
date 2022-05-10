@@ -51,15 +51,15 @@ func (t *tektonPipelines) Name() string {
 }
 
 func (t *tektonPipelines) WatchClusterTypes() []client.Object {
-	return nil
-}
-
-func (t *tektonPipelines) WatchTypes() []client.Object {
 	return []client.Object{
 		&pipeline.Pipeline{},
 		&v1.ConfigMap{},
 		&rbac.RoleBinding{},
 	}
+}
+
+func (t *tektonPipelines) WatchTypes() []client.Object {
+	return nil
 }
 
 func (t *tektonPipelines) RequiredCrds() []string {
