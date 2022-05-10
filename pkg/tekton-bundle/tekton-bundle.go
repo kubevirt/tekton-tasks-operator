@@ -45,16 +45,39 @@ type Bundle struct {
 	ConfigMaps      []v1.ConfigMap
 }
 
-func ReadBundle(cl client.Reader, ctx context.Context) (*Bundle, error) {
+func ReadTasksBundle(cl client.Reader, ctx context.Context) (*Bundle, error) {
 	isOpenshift, err := runningOnOpenshift(cl, ctx)
 	if err != nil {
 		return nil, err
 	}
-	taskPath := getTasksBundlePath(isOpenshift)
 
-	pipelinePath := getPipelineBundlePath(isOpenshift)
+	path := getTasksBundlePath(isOpenshift)
+	files, err := readFile(path)
+	if err != nil {
+		return nil, err
+	}
 
-	tektonObjs, err := decodeObjectsFromFiles(taskPath, pipelinePath)
+	tektonObjs, err := decodeObjectsFromFiles(files)
+	if err != nil {
+		return nil, err
+	}
+
+	return tektonObjs, nil
+}
+
+func ReadPipelineBundle(cl client.Reader, ctx context.Context) (*Bundle, error) {
+	isOpenshift, err := runningOnOpenshift(cl, ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	path := getPipelineBundlePath(isOpenshift)
+	files, err := readFolder(path)
+	if err != nil {
+		return nil, err
+	}
+
+	tektonObjs, err := decodeObjectsFromFiles(files)
 	if err != nil {
 		return nil, err
 	}
@@ -93,8 +116,13 @@ func runningOnOpenshift(cl client.Reader, ctx context.Context) (bool, error) {
 	return true, nil
 }
 
-func readFile(fileName string) ([]byte, error) {
-	return ioutil.ReadFile(fileName)
+func readFile(fileName string) ([][]byte, error) {
+	file, err := ioutil.ReadFile(fileName)
+	if err != nil {
+		return nil, err
+	}
+
+	return [][]byte{file}, nil
 }
 
 func readFolder(folderPath string) ([][]byte, error) {
@@ -118,35 +146,13 @@ func readFolder(folderPath string) ([][]byte, error) {
 	return filesBytes, nil
 }
 
-func readFiles(taskFilename, pipelinesFolder string) ([][]byte, error) {
-	files := [][]byte{}
-	fileBytes, err := ioutil.ReadFile(taskFilename)
-	if err != nil {
-		return nil, err
-	}
-
-	files = append(files, fileBytes)
-
-	filesBytes, err := readFolder(pipelinesFolder)
-	if err != nil {
-		return nil, err
-	}
-
-	return append(files, filesBytes...), nil
-}
-
-func decodeObjectsFromFiles(taskFilename, pipelinesFolder string) (*Bundle, error) {
-	files, err := readFiles(taskFilename, pipelinesFolder)
-	if err != nil {
-		return nil, err
-	}
-
+func decodeObjectsFromFiles(files [][]byte) (*Bundle, error) {
 	bundle := &Bundle{}
 	for _, file := range files {
 		decoder := yaml.NewYAMLOrJSONDecoder(bytes.NewReader(file), 1024)
 		for {
 			var obj map[string]interface{}
-			err = decoder.Decode(&obj)
+			err := decoder.Decode(&obj)
 			if err == io.EOF {
 				break
 			}

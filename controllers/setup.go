@@ -15,14 +15,20 @@ import (
 )
 
 func CreateAndSetupReconciler(mgr controllerruntime.Manager) error {
-	ttBundle, err := tektonbundle.ReadBundle(mgr.GetAPIReader(), context.Background())
+	reader := mgr.GetAPIReader()
+	ctx := context.Background()
+	ttTasksBundle, err := tektonbundle.ReadTasksBundle(reader, ctx)
+	if err != nil {
+		return err
+	}
+	ttPipelinesBundle, err := tektonbundle.ReadPipelineBundle(reader, ctx)
 	if err != nil {
 		return err
 	}
 
 	tektonOperands := []operands.Operand{
-		tektontasks.New(ttBundle),
-		tektonpipelines.New(ttBundle),
+		tektontasks.New(ttTasksBundle),
+		tektonpipelines.New(ttPipelinesBundle),
 	}
 
 	var requiredCrds []string

@@ -11,6 +11,7 @@ import (
 	. "github.com/onsi/gomega"
 	pipeline "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	v1 "k8s.io/api/core/v1"
+	rbac "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
@@ -36,6 +37,7 @@ var _ = Describe("environments", func() {
 		res := New(getMockedTestBundle())
 		Expect(len(res.pipelines)).To(Equal(2), "should return correct number of pipelines")
 		Expect(len(res.configMaps)).To(Equal(2), "should return correct number of config maps")
+		Expect(len(res.roleBindings)).To(Equal(2), "should return correct number of rolebindings")
 	})
 
 	It("Name function should return correct name", func() {
@@ -46,7 +48,7 @@ var _ = Describe("environments", func() {
 	It("Reconcile function should return correct functions", func() {
 		functions, err := tp.Reconcile(mockedRequest)
 		Expect(err).ToNot(HaveOccurred(), "should not throw err")
-		Expect(len(functions)).To(Equal(4), "should return correct number of reconcile functions")
+		Expect(len(functions)).To(Equal(6), "should return correct number of reconcile functions")
 	})
 
 	It("RequiredCrds function should return required crds", func() {
@@ -87,7 +89,7 @@ func getMockedRequest() *common.Request {
 		Context: context.Background(),
 		Instance: &tekton.TektonTasks{
 			TypeMeta: metav1.TypeMeta{
-				Kind:       "TetktonTasks",
+				Kind:       "TektonTasks",
 				APIVersion: tekton.GroupVersion.String(),
 			},
 			ObjectMeta: metav1.ObjectMeta{
@@ -123,6 +125,17 @@ func getMockedTektonPipelinesOperand() *tektonPipelines {
 					Name: "test-cm2",
 				},
 			},
+		},
+		roleBindings: []rbac.RoleBinding{
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-rb",
+				},
+			}, {
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-rb2",
+				},
+			},
 		}}
 }
 
@@ -147,6 +160,17 @@ func getMockedTestBundle() *tektonbundle.Bundle {
 			}, {
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "test-cm2",
+				},
+			},
+		},
+		RoleBindings: []rbac.RoleBinding{
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-rb",
+				},
+			}, {
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-rb2",
 				},
 			},
 		},
