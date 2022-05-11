@@ -81,7 +81,7 @@ func (t *tektonPipelines) Reconcile(request *common.Request) ([]common.Reconcile
 	upgradingNow := isUpgradingNow(request)
 	for _, r := range reconcileTektonBundleResults {
 		if !upgradingNow && (r.OperationResult == common.OperationResultUpdated) {
-			request.Logger.Info(fmt.Sprintf("Changes reverted in tekton tasks: %s", r.Resource.GetName()))
+			request.Logger.Info(fmt.Sprintf("Changes reverted in tekton pipeline: %s", r.Resource.GetName()))
 		}
 	}
 	return append(results, reconcileTektonBundleResults...), nil
