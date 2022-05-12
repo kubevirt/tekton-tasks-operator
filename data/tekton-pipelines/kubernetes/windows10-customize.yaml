@@ -246,6 +246,8 @@ spec:
         - name: dataVolumes
           value:
             - "rootdisk: $(tasks.create-base-dv.results.name)"
+        - name: runStrategy
+          value: RerunOnFailure
         - name: startVM
           value: "true"
       runAfter:
@@ -263,7 +265,7 @@ spec:
         - name: failureCondition
           value: status.phase in (Failed, Unknown)
       runAfter:
-        - create-vm-from-template
+        - create-vm-from-manifest
       timeout: 2h
       taskRef:
         kind: ClusterTask
