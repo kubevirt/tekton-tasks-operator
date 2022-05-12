@@ -305,8 +305,8 @@ spec:
             apiVersion: cdi.kubevirt.io/v1beta1
             kind: DataVolume
             metadata:
-              name: win10
-              namespace: openshift-virtualization-os-images
+              name: $(params.baseDvName)
+              namespace: $(params.baseDvNamespace)
               annotations:
                 cdi.kubevirt.io/storage.bind.immediate.requested: \"true\"
             spec:
