@@ -138,6 +138,18 @@ spec:
           - update
           - watch
         - apiGroups:
+          - rbac.authorization.k8s.io
+          resources:
+          - rolebindings
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
           - subresources.kubevirt.io
           resources:
           - virtualmachines/restart
@@ -274,7 +286,14 @@ spec:
                     memory: 150Mi
                 securityContext:
                   allowPrivilegeEscalation: false
+                  capabilities:
+                    drop:
+                    - ALL
               priorityClassName: system-cluster-critical
+              securityContext:
+                runAsNonRoot: true
+                seccompProfile:
+                  type: RuntimeDefault
               serviceAccountName: tekton-tasks-operator
               terminationGracePeriodSeconds: 10
       permissions:
