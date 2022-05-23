@@ -21,6 +21,10 @@ spec:
     spec:
       serviceAccountName: tekton-tasks-operator
       priorityClassName: system-cluster-critical
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+            type: RuntimeDefault
       containers:
       - command:
         - /manager
@@ -48,6 +52,9 @@ spec:
             cpu: "100m"
         securityContext:
           allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - "ALL"
         livenessProbe:
           httpGet:
             path: /healthz
