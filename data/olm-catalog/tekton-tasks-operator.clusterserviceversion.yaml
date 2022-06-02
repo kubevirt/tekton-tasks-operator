@@ -238,7 +238,6 @@ spec:
               labels:
                 control-plane: tekton-tasks-operator
                 name: tekton-tasks-operator
-                prometheus.kubevirt.io: "true"
               namespace: kubevirt
             spec:
               containers:
@@ -270,10 +269,6 @@ spec:
                   initialDelaySeconds: 15
                   periodSeconds: 20
                 name: manager
-                ports:
-                - containerPort: 8443
-                  name: metrics
-                  protocol: TCP
                 readinessProbe:
                   httpGet:
                     path: /readyz
