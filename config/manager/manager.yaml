@@ -17,7 +17,6 @@ spec:
       labels:
         control-plane: tekton-tasks-operator
         name: tekton-tasks-operator
-        prometheus.kubevirt.io: "true"
     spec:
       serviceAccountName: tekton-tasks-operator
       priorityClassName: system-cluster-critical
@@ -61,10 +60,6 @@ spec:
             port: 8081
           initialDelaySeconds: 15
           periodSeconds: 20
-        ports:
-          - name: metrics
-            protocol: TCP
-            containerPort: 8443
         readinessProbe:
           httpGet:
             path: /readyz
