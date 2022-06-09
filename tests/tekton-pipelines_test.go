@@ -42,6 +42,20 @@ var _ = Describe("Tekton-pipelines", func() {
 			}
 		})
 
+		It("[test_id:TODO]operator should not create service accounts with pipelines in non ^openshift|kube namespace", func() {
+			liveSA := &v1.ServiceAccountList{}
+			Eventually(func() bool {
+				err := apiClient.List(ctx, liveSA,
+					client.MatchingLabels{
+						common.AppKubernetesManagedByLabel: common.AppKubernetesManagedByValue,
+						common.AppKubernetesComponentLabel: string(common.AppComponentTektonPipelines),
+					},
+				)
+				Expect(err).ToNot(HaveOccurred())
+				return len(liveSA.Items) == 0
+			}, tenSecondTimeout, time.Second).Should(BeTrue(), "there should be no service accounts deployed with pipelines")
+		})
+
 		It("[test_id:TODO]operator should create role bindings", func() {
 			liveRB := &rbac.RoleBindingList{}
 			Eventually(func() bool {
