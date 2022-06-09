@@ -119,6 +119,11 @@ data:
     # Eject CD, to avoid that the unattend.xml on the CD is picked up by sysprep
     (New-Object -COMObject Shell.Application).NameSpace(17).ParseName("F:").InvokeVerb("Eject")
 ---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: pipeline
+---
 apiVersion: tekton.dev/v1beta1
 kind: Pipeline
 metadata:

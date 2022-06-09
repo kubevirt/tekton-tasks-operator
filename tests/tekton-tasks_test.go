@@ -113,6 +113,7 @@ var _ = Describe("Tekton-tasks", func() {
 				err := apiClient.List(ctx, liveSA,
 					client.MatchingLabels{
 						common.AppKubernetesManagedByLabel: common.AppKubernetesManagedByValue,
+						common.AppKubernetesComponentLabel: string(common.AppComponentTektonTasks),
 					},
 				)
 				Expect(err).ToNot(HaveOccurred())
