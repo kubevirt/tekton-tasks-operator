@@ -183,9 +183,8 @@ func reconcileServiceAccountsFuncs(r *common.Request, sas []v1.ServiceAccount) [
 				UpdateFunc(func(newRes, foundRes client.Object) {
 					newSA := newRes.(*v1.ServiceAccount)
 					foundSA := foundRes.(*v1.ServiceAccount)
-					foundSA.Secrets = newSA.Secrets
-					foundSA.ImagePullSecrets = newSA.ImagePullSecrets
-					foundSA.AutomountServiceAccountToken = newSA.AutomountServiceAccountToken
+					foundSA.Labels = newSA.Labels
+					foundSA.Annotations = newSA.Annotations
 				}).
 				Reconcile()
 		})
