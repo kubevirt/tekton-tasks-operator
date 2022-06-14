@@ -2,6 +2,7 @@ package tekton_pipelines
 
 import (
 	"fmt"
+	"regexp"
 
 	"github.com/kubevirt/tekton-tasks-operator/pkg/common"
 	"github.com/kubevirt/tekton-tasks-operator/pkg/environment"
@@ -19,9 +20,12 @@ import (
 // +kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=rolebindings,verbs=get;list;watch;create;update;patch;delete
 
 const (
+	namespacePattern = "^(openshift|kube)-"
 	operandName      = "tekton-pipelines"
 	operandComponent = common.AppComponentTektonPipelines
 )
+
+var namespaceRegex = regexp.MustCompile(namespacePattern)
 
 var requiredCRDs = []string{"tasks.tekton.dev"}
 
@@ -30,18 +34,20 @@ func init() {
 }
 
 type tektonPipelines struct {
-	pipelines    []pipeline.Pipeline
-	configMaps   []v1.ConfigMap
-	roleBindings []rbac.RoleBinding
+	pipelines       []pipeline.Pipeline
+	configMaps      []v1.ConfigMap
+	roleBindings    []rbac.RoleBinding
+	serviceAccounts []v1.ServiceAccount
 }
 
 var _ operands.Operand = &tektonPipelines{}
 
 func New(bundle *tektonbundle.Bundle) *tektonPipelines {
 	tp := &tektonPipelines{
-		pipelines:    bundle.Pipelines,
-		configMaps:   bundle.ConfigMaps,
-		roleBindings: bundle.RoleBindings,
+		pipelines:       bundle.Pipelines,
+		configMaps:      bundle.ConfigMaps,
+		roleBindings:    bundle.RoleBindings,
+		serviceAccounts: bundle.ServiceAccounts,
 	}
 	return tp
 }
@@ -55,6 +61,7 @@ func (t *tektonPipelines) WatchClusterTypes() []client.Object {
 		&pipeline.Pipeline{},
 		&v1.ConfigMap{},
 		&rbac.RoleBinding{},
+		&v1.ServiceAccount{},
 	}
 }
 
@@ -72,6 +79,7 @@ func (t *tektonPipelines) Reconcile(request *common.Request) ([]common.Reconcile
 	reconcileFunc = append(reconcileFunc, reconcileTektonPipelinesFuncs(t.pipelines)...)
 	reconcileFunc = append(reconcileFunc, reconcileConfigMapsFuncs(t.configMaps)...)
 	reconcileFunc = append(reconcileFunc, reconcileRoleBindingsFuncs(t.roleBindings)...)
+	reconcileFunc = append(reconcileFunc, reconcileServiceAccountsFuncs(request, t.serviceAccounts)...)
 
 	reconcileTektonBundleResults, err := common.CollectResourceStatus(request, reconcileFunc...)
 	if err != nil {
@@ -99,6 +107,10 @@ func (t *tektonPipelines) Cleanup(request *common.Request) ([]common.CleanupResu
 	}
 	for _, rb := range t.roleBindings {
 		o := rb.DeepCopy()
+		objects = append(objects, o)
+	}
+	for _, sa := range t.serviceAccounts {
+		o := sa.DeepCopy()
 		objects = append(objects, o)
 	}
 
@@ -144,6 +156,35 @@ func reconcileConfigMapsFuncs(configMaps []v1.ConfigMap) []common.ReconcileFunc 
 					newCM := newRes.(*v1.ConfigMap)
 					foundCM := foundRes.(*v1.ConfigMap)
 					foundCM.Data = newCM.Data
+				}).
+				Reconcile()
+		})
+	}
+	return funcs
+}
+
+func reconcileServiceAccountsFuncs(r *common.Request, sas []v1.ServiceAccount) []common.ReconcileFunc {
+	funcs := make([]common.ReconcileFunc, 0, len(sas))
+	for i := range sas {
+		sa := &sas[i]
+		// deploy pipeline SA only in `^(openshift|kube)-` namespaces
+		if !namespaceRegex.MatchString(r.Instance.Spec.Pipelines.Namespace) && sa.Name == "pipeline" {
+			continue
+		}
+
+		funcs = append(funcs, func(request *common.Request) (common.ReconcileResult, error) {
+			namespace := request.Instance.Namespace
+			if sa.Namespace == "" {
+				sa.Namespace = namespace
+			}
+			return common.CreateOrUpdate(request).
+				ClusterResource(sa).
+				WithAppLabels(operandName, operandComponent).
+				UpdateFunc(func(newRes, foundRes client.Object) {
+					newSA := newRes.(*v1.ServiceAccount)
+					foundSA := foundRes.(*v1.ServiceAccount)
+					foundSA.Labels = newSA.Labels
+					foundSA.Annotations = newSA.Annotations
 				}).
 				Reconcile()
 		})
