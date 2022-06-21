@@ -38,6 +38,7 @@ type tektonPipelines struct {
 	configMaps      []v1.ConfigMap
 	roleBindings    []rbac.RoleBinding
 	serviceAccounts []v1.ServiceAccount
+	clusterRoles    []rbac.ClusterRole
 }
 
 var _ operands.Operand = &tektonPipelines{}
@@ -48,6 +49,7 @@ func New(bundle *tektonbundle.Bundle) *tektonPipelines {
 		configMaps:      bundle.ConfigMaps,
 		roleBindings:    bundle.RoleBindings,
 		serviceAccounts: bundle.ServiceAccounts,
+		clusterRoles:    bundle.ClusterRoles,
 	}
 	return tp
 }
@@ -62,6 +64,7 @@ func (t *tektonPipelines) WatchClusterTypes() []client.Object {
 		&v1.ConfigMap{},
 		&rbac.RoleBinding{},
 		&v1.ServiceAccount{},
+		&rbac.ClusterRole{},
 	}
 }
 
@@ -76,9 +79,10 @@ func (t *tektonPipelines) RequiredCrds() []string {
 func (t *tektonPipelines) Reconcile(request *common.Request) ([]common.ReconcileResult, error) {
 	var results []common.ReconcileResult
 	var reconcileFunc []common.ReconcileFunc
+	reconcileFunc = append(reconcileFunc, reconcileClusterRolesFuncs(request, t.clusterRoles)...)
 	reconcileFunc = append(reconcileFunc, reconcileTektonPipelinesFuncs(t.pipelines)...)
 	reconcileFunc = append(reconcileFunc, reconcileConfigMapsFuncs(t.configMaps)...)
-	reconcileFunc = append(reconcileFunc, reconcileRoleBindingsFuncs(t.roleBindings)...)
+	reconcileFunc = append(reconcileFunc, reconcileRoleBindingsFuncs(request, t.roleBindings)...)
 	reconcileFunc = append(reconcileFunc, reconcileServiceAccountsFuncs(request, t.serviceAccounts)...)
 
 	reconcileTektonBundleResults, err := common.CollectResourceStatus(request, reconcileFunc...)
@@ -111,6 +115,10 @@ func (t *tektonPipelines) Cleanup(request *common.Request) ([]common.CleanupResu
 	}
 	for _, sa := range t.serviceAccounts {
 		o := sa.DeepCopy()
+		objects = append(objects, o)
+	}
+	for _, cr := range t.clusterRoles {
+		o := cr.DeepCopy()
 		objects = append(objects, o)
 	}
 
@@ -192,10 +200,38 @@ func reconcileServiceAccountsFuncs(r *common.Request, sas []v1.ServiceAccount) [
 	return funcs
 }
 
-func reconcileRoleBindingsFuncs(rbs []rbac.RoleBinding) []common.ReconcileFunc {
+func reconcileClusterRolesFuncs(r *common.Request, crs []rbac.ClusterRole) []common.ReconcileFunc {
+	funcs := make([]common.ReconcileFunc, 0, len(crs))
+	for i := range crs {
+		cr := &crs[i]
+		// deploy windows10-pipelines cluster role only in `^(openshift|kube)-` namespaces
+		if !namespaceRegex.MatchString(r.Instance.Spec.Pipelines.Namespace) && cr.Name == "windows10-pipelines" {
+			continue
+		}
+		funcs = append(funcs, func(request *common.Request) (common.ReconcileResult, error) {
+			return common.CreateOrUpdate(request).
+				ClusterResource(cr).
+				WithAppLabels(operandName, operandComponent).
+				UpdateFunc(func(newRes, foundRes client.Object) {
+					newCR := newRes.(*rbac.ClusterRole)
+					foundCR := foundRes.(*rbac.ClusterRole)
+					foundCR.Labels = newCR.Labels
+					foundCR.Annotations = newCR.Annotations
+				}).
+				Reconcile()
+		})
+	}
+	return funcs
+}
+
+func reconcileRoleBindingsFuncs(r *common.Request, rbs []rbac.RoleBinding) []common.ReconcileFunc {
 	funcs := make([]common.ReconcileFunc, 0, len(rbs))
 	for i := range rbs {
 		rb := &rbs[i]
+		// deploy windows10-pipelines role binding only in `^(openshift|kube)-` namespaces
+		if !namespaceRegex.MatchString(r.Instance.Spec.Pipelines.Namespace) && rb.Name == "windows10-pipelines" {
+			continue
+		}
 		funcs = append(funcs, func(request *common.Request) (common.ReconcileResult, error) {
 			namespace := request.Instance.Namespace
 			if rb.Namespace == "" {
