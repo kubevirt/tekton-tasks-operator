@@ -15,6 +15,12 @@ CDI_VERSION=$(curl -s https://api.github.com/repos/kubevirt/containerized-data-i
 TEKTON_VERSION=$(curl -s https://api.github.com/repos/tektoncd/operator/releases | \
             jq '.[] | select(.prerelease==false) | .tag_name' | sort -V | tail -n1 | tr -d '"')
 
+COMMON_TEMPLATES_VERSION=$(curl -s https://api.github.com/repos/kubevirt/common-templates/releases | \
+            jq '.[] | select(.prerelease==false) | .tag_name' | sort -V | tail -n1 | tr -d '"')
+
+# Deploy Common Templates
+oc apply -f "https://github.com/kubevirt/common-templates/releases/download/${COMMON_TEMPLATES_VERSION}/common-templates.yaml" -n openshift
+
 # Deploy Tekton Pipelines
 oc apply -f "https://github.com/tektoncd/operator/releases/download/${TEKTON_VERSION}/openshift-release.yaml"
 
