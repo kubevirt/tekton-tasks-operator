@@ -217,6 +217,7 @@ func reconcileClusterRolesFuncs(r *common.Request, crs []rbac.ClusterRole) []com
 					foundCR := foundRes.(*rbac.ClusterRole)
 					foundCR.Labels = newCR.Labels
 					foundCR.Annotations = newCR.Annotations
+					foundCR.Rules = newCR.Rules
 				}).
 				Reconcile()
 		})
