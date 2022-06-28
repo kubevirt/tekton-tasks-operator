@@ -222,15 +222,15 @@ apiVersion: tekton.dev/v1beta1
 kind: ClusterTask
 metadata:
   annotations:
-    task.kubevirt.io/associatedServiceAccount: create-datavolume-from-manifest-task
+    task.kubevirt.io/associatedServiceAccount: create-data-object-task
     manifest.params.task.kubevirt.io/type: resource-yaml
     manifest.params.task.kubevirt.io/kind: DataVolume
     manifest.params.task.kubevirt.io/apiVersion: cdi.kubevirt.io/v1beta1
     waitForSuccess.params.task.kubevirt.io/type: boolean
   labels:
-    task.kubevirt.io/type: create-datavolume-from-manifest
-    task.kubevirt.io/category: create-datavolume
-  name: create-datavolume-from-manifest
+    task.kubevirt.io/type: create-data-object
+    task.kubevirt.io/category: create-data-object
+  name: create-data-object
 spec:
   description: >-
     This task creates a DataVolume with oc client. It can optionally wait until
@@ -289,7 +289,7 @@ spec:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: create-datavolume-from-manifest-task
+  name: create-data-object-task
 rules:
   - verbs:
       - get
@@ -305,20 +305,20 @@ rules:
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: create-datavolume-from-manifest-task
+  name: create-data-object-task
 
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  name: create-datavolume-from-manifest-task
+  name: create-data-object-task
 roleRef:
   kind: ClusterRole
-  name: create-datavolume-from-manifest-task
+  name: create-data-object-task
   apiGroup: rbac.authorization.k8s.io
 subjects:
   - kind: ServiceAccount
-    name: create-datavolume-from-manifest-task
+    name: create-data-object-task
 ---
 apiVersion: tekton.dev/v1beta1
 kind: ClusterTask

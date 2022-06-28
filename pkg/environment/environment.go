@@ -26,7 +26,7 @@ const (
 	OperatorNamespaceKey      = "OPERATOR_NAMESPACE"
 	CleanupVMImageKey         = "CLEANUP_VM_IMG"
 	CopyTemplateImageKey      = "COPY_TEMPLATE_IMG"
-	CreateDatavolumeImageKey  = "CREATE_DATAVOLUME_IMG"
+	CreateDataObjectImageKey  = "CREATE_DATAOBJECT_IMG"
 	CreateVMImageKey          = "CREATE_VM_IMG"
 	DiskVirtCustomizeImageKey = "DISK_VIRT_CUSTOMIZE_IMG"
 	DiskVirtSysprepImageKey   = "DISK_VIRT_SYSPREP_IMG"
@@ -39,7 +39,7 @@ const (
 	DeafultDiskVirtSysprepIMG   = "quay.io/kubevirt/tekton-task-disk-virt-sysprep:" + operands.TektonTasksVersion
 	DeafultDiskVirtCustomizeIMG = "quay.io/kubevirt/tekton-task-disk-virt-customize:" + operands.TektonTasksVersion
 	DeafultCreateVMIMG          = "quay.io/kubevirt/tekton-task-create-vm:" + operands.TektonTasksVersion
-	DeafultCreateDatavolumeIMG  = "quay.io/openshift/origin-cli:4.8"
+	DeafultCreateDataObjectIMG  = "quay.io/kubevirt/tekton-task-create-data-object" + operands.TektonTasksVersion
 	DeafultCopyTemplateIMG      = "quay.io/kubevirt/tekton-task-copy-template:" + operands.TektonTasksVersion
 	DeafultCleanupVMIMG         = "quay.io/kubevirt/tekton-task-execute-in-vm:" + operands.TektonTasksVersion
 	GenerateSSHKeysIMG          = "quay.io/kubevirt/tekton-task-generate-ssh-keys:" + operands.TektonTasksVersion
@@ -77,9 +77,9 @@ func GetCreateVMImage() string {
 	return EnvOrDefault(CreateVMImageKey, DeafultCreateVMIMG)
 }
 
-// GetCreateDatavolumeImage returns create-datavolume-from-manifest task image url
-func GetCreateDatavolumeImage() string {
-	return EnvOrDefault(CreateDatavolumeImageKey, DeafultCreateDatavolumeIMG)
+// GetCreateDataObjectImage returns create-data-object task image url
+func GetCreateDataObjectImage() string {
+	return EnvOrDefault(CreateDataObjectImageKey, DeafultCreateDataObjectIMG)
 }
 
 // GetCopyTemplatemage returns copy-template task image url

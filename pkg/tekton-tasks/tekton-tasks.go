@@ -20,9 +20,10 @@ import (
 // +kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=clusterroles;rolebindings,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=kubevirt.io,resources=virtualmachineinstances;virtualmachines,verbs=create;update;get;list;watch;delete
 // +kubebuilder:rbac:groups=subresources.kubevirt.io,resources=virtualmachines/restart;virtualmachines/start;virtualmachines/stop,verbs=update
-// +kubebuilder:rbac:groups=template.openshift.io,resources=templates,verbs=get;list;watch;create;patch;update
+// +kubebuilder:rbac:groups=template.openshift.io,resources=templates,verbs=get;list;watch;create;patch;update;delete
 // +kubebuilder:rbac:groups=template.openshift.io,resources=processedtemplates,verbs=create
 // +kubebuilder:rbac:groups=cdi.kubevirt.io,resources=datavolumes,verbs=*
+// +kubebuilder:rbac:groups=cdi.kubevirt.io,resources=datasources,verbs=get;create;delete
 // +kubebuilder:rbac:groups=kubevirt.io,resources=virtualmachines/finalizers,verbs=*
 // +kubebuilder:rbac:groups=*,resources=persistentvolumeclaims,verbs=*
 // +kubebuilder:rbac:groups=*,resources=pods,verbs=create
@@ -34,7 +35,7 @@ const (
 
 	cleanVMTaskName              = "cleanup-vm"
 	copyTemplateTaskName         = "copy-template"
-	datavolumeTaskName           = "create-datavolume-from-manifest"
+	createDataObjectTaskName     = "create-data-object"
 	createVMFromTemplateTaskName = "create-vm-from-template"
 	diskVirtCustomizeTaskName    = "disk-virt-customize"
 	diskVirtSysprepTaskName      = "disk-virt-sysprep"
@@ -51,7 +52,7 @@ var AllowedTasks = map[string]func() string{
 	createVMFromManifestTaskName: environment.GetCreateVMImage,
 	cleanVMTaskName:              environment.GetCleanupVMImage,
 	copyTemplateTaskName:         environment.GetCopyTemplateImage,
-	datavolumeTaskName:           environment.GetCreateDatavolumeImage,
+	createDataObjectTaskName:     environment.GetCreateDataObjectImage,
 	createVMFromTemplateTaskName: environment.GetCreateVMImage,
 	diskVirtCustomizeTaskName:    environment.GetDiskVirtCustomizeImage,
 	diskVirtSysprepTaskName:      environment.GetDiskVirtSysprepImage,

@@ -32,7 +32,7 @@ spec:
           - name: "OPERATOR_VERSION"
           - name: "CLEANUP_VM_IMG"
           - name: "COPY_TEMPLATE_IMG"
-          - name: "CREATE_DATAVOLUME_IMG"
+          - name: "CREATE_DATA_OBJECT_IMG"
           - name: "CREATE_VM_IMG"
           - name: "DISK_VIRT_CUSTOMIZE_IMG"
           - name: "DISK_VIRT_SYSPREP_IMG"
