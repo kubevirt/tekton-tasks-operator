@@ -160,7 +160,7 @@ spec:
       timeout: 10m
       taskRef:
         kind: ClusterTask
-        name: create-datavolume-from-manifest
+        name: create-data-object
     - name: create-vm-from-manifest
       params:
         - name: manifest

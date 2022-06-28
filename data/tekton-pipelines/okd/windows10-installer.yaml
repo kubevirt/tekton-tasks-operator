@@ -13,15 +13,15 @@ subjects:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  name: create-datavolume-from-manifest-task
+  name: create-data-object-task
   namespace: kubevirt-os-images
 roleRef:
   kind: ClusterRole
-  name: create-datavolume-from-manifest-task
+  name: create-data-object-task
   apiGroup: rbac.authorization.k8s.io
 subjects:
   - kind: ServiceAccount
-    name: create-datavolume-from-manifest-task
+    name: create-data-object-task
   - kind: ServiceAccount
     name: pipeline
 ---
@@ -425,7 +425,7 @@ spec:
       timeout: 1h
       taskRef:
         kind: ClusterTask
-        name: create-datavolume-from-manifest
+        name: create-data-object
     - name: cleanup-vm
       params:
         - name: vmName
