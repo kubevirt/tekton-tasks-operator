@@ -99,7 +99,7 @@ func TestTektonBundle(t *testing.T) {
 
 func getMockedRequest() *common.Request {
 	log := logf.Log.WithName("tekton-tasks-operand")
-	client := fake.NewFakeClientWithScheme(common.Scheme)
+	clientBuilder := fake.NewClientBuilder().WithScheme(common.Scheme)
 	return &common.Request{
 		Request: reconcile.Request{
 			NamespacedName: types.NamespacedName{
@@ -107,7 +107,7 @@ func getMockedRequest() *common.Request {
 				Name:      name,
 			},
 		},
-		Client:  client,
+		Client:  clientBuilder.Build(),
 		Context: context.Background(),
 		Instance: &tekton.TektonTasks{
 			TypeMeta: metav1.TypeMeta{
@@ -219,7 +219,7 @@ func getMockedTestBundle() *tektonbundle.Bundle {
 				},
 			}, {
 				ObjectMeta: metav1.ObjectMeta{
-					Name: datavolumeTaskName,
+					Name: createDataObjectTaskName,
 				},
 			}, {
 				ObjectMeta: metav1.ObjectMeta{
@@ -270,7 +270,7 @@ func getMockedTestBundle() *tektonbundle.Bundle {
 				},
 			}, {
 				ObjectMeta: metav1.ObjectMeta{
-					Name: datavolumeTaskName + "-task",
+					Name: createDataObjectTaskName + "-task",
 				},
 			}, {
 				ObjectMeta: metav1.ObjectMeta{
@@ -321,7 +321,7 @@ func getMockedTestBundle() *tektonbundle.Bundle {
 				},
 			}, {
 				ObjectMeta: metav1.ObjectMeta{
-					Name: datavolumeTaskName + "-task",
+					Name: createDataObjectTaskName + "-task",
 				},
 			}, {
 				ObjectMeta: metav1.ObjectMeta{
@@ -372,7 +372,7 @@ func getMockedTestBundle() *tektonbundle.Bundle {
 				},
 			}, {
 				ObjectMeta: metav1.ObjectMeta{
-					Name: datavolumeTaskName + "-task",
+					Name: createDataObjectTaskName + "-task",
 				},
 			}, {
 				ObjectMeta: metav1.ObjectMeta{

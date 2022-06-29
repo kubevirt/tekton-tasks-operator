@@ -53,7 +53,7 @@ spec:
       default: ""
   steps:
     - name: execute-in-vm
-      image: "quay.io/kubevirt/tekton-task-execute-in-vm:v0.5.0"
+      image: "quay.io/kubevirt/tekton-task-execute-in-vm:v0.10.0"
       command:
         - entrypoint
       args:
@@ -140,6 +140,7 @@ metadata:
     targetTemplateName.params.task.kubevirt.io/kind: Template
     targetTemplateName.params.task.kubevirt.io/apiVersion: template.openshift.io/v1
     targetTemplateNamespace.params.task.kubevirt.io/type: namespace
+    allowReplace.params.task.kubevirt.io/type: boolean
   labels:
     task.kubevirt.io/type: copy-template
     task.kubevirt.io/category: copy-template
@@ -161,6 +162,10 @@ spec:
       description: Namespace of an target OpenShift template to create in. (defaults to active namespace)
       type: string
       default: ""
+    - name: allowReplace
+      description: Allow replacing already existing template (same combination name/namespace). Allowed values true/false
+      type: string
+      default: "false"
   results:
     - name: name
       description: The name of a template that was created.
@@ -168,7 +173,7 @@ spec:
       description: The namespace of a template that was created.
   steps:
     - name: copytemplate
-      image: "quay.io/kubevirt/tekton-task-copy-template:v0.5.0"
+      image: "quay.io/kubevirt/tekton-task-copy-template:v0.10.0"
       command:
         - copy-template
       args:
@@ -182,6 +187,8 @@ spec:
           value: $(params.targetTemplateName)
         - name: TARGET_TEMPLATE_NAMESPACE
           value: $(params.targetTemplateNamespace)
+        - name: ALLOW_REPLACE
+          value: $(params.allowReplace)
 
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -194,6 +201,7 @@ rules:
       - list
       - watch
       - create
+      - update
     apiGroups:
       - template.openshift.io
     resources:
@@ -224,7 +232,6 @@ metadata:
   annotations:
     task.kubevirt.io/associatedServiceAccount: create-data-object-task
     manifest.params.task.kubevirt.io/type: resource-yaml
-    manifest.params.task.kubevirt.io/kind: DataVolume
     manifest.params.task.kubevirt.io/apiVersion: cdi.kubevirt.io/v1beta1
     waitForSuccess.params.task.kubevirt.io/type: boolean
   labels:
@@ -233,57 +240,44 @@ metadata:
   name: create-data-object
 spec:
   description: >-
-    This task creates a DataVolume with oc client. It can optionally wait until
-    CDI imports finishes.
+    This task creates a data object (DataVolume or DataSource). It can optionally wait until CDI imports finish.
   params:
     - name: manifest
-      description: YAML manifest of a DataVolume resource to be created.
+      description: YAML manifest of a data object to be created.
+      type: string
+    - name: namespace
+      description: Namespace where to create the data object. (defaults to manifest namespace or active namespace)
+      default: ""
       type: string
     - name: waitForSuccess
-      description: Set to "true" or "false" if container should wait for Ready condition of a DataVolume.
+      description: Set to "true" or "false" if container should wait for Ready condition of the data object.
       default: 'false'
       type: string
+    - name: allowReplace
+      description: Allow replacing an already existing data object (same combination name/namespace). Allowed values true/false
+      type: string
+      default: "false"
   results:
     - name: name
-      description: The name of DataVolume that was created.
+      description: The name of the data object that was created.
     - name: namespace
-      description: The namespace of DataVolume that was created.
+      description: The namespace of the data object that was created.
   steps:
-    - name: create
-      image: quay.io/openshift/origin-cli:4.8
-      script: |
-        #!/usr/bin/env bash
-
-        set -e
-
-        TMP_DV_YAML_FILENAME="/tmp/datavolume.yaml"
-        TMP_DV_RESULTS_FILENAME="/tmp/dv_results"
-
-        echo "$(inputs.params.manifest)" > "$TMP_DV_YAML_FILENAME"
-
-        if ! grep -q "kind: DataVolume$" "$TMP_DV_YAML_FILENAME"; then
-            1>&2 echo "manifest does not contain DataVolume kind!"
-            exit 1
-        fi
-
-        oc create -f "$TMP_DV_YAML_FILENAME" -o  jsonpath='{.metadata.name} {.metadata.namespace}' > "$TMP_DV_RESULTS_FILENAME"
-
-        sed -i 's/ /\n/g' "$TMP_DV_RESULTS_FILENAME"
-        readarray -t DV_OUTPUT_ARRAY < "$TMP_DV_RESULTS_FILENAME"
-
-        DV_NAME="${DV_OUTPUT_ARRAY[0]}"
-        DV_NAMESPACE="${DV_OUTPUT_ARRAY[1]}"
-
-        echo -n "$DV_NAME" > /tekton/results/name
-        echo -n "$DV_NAMESPACE" > /tekton/results/namespace
-
-        echo "Created $DV_NAME Datavolume in $DV_NAMESPACE namespace."
-
-        if [ "$(inputs.params.waitForSuccess)" == true ]; then
-            echo "Waiting for Ready condition."
-            # TODO: detect failed imports and don't wait until wait timeouts
-            oc wait "datavolumes.cdi.kubevirt.io/$DV_NAME" --namespace="$DV_NAMESPACE" --for="condition=Ready" --timeout=720h
-        fi
+    - name: create-data-object
+      image: "quay.io/kubevirt/tekton-task-create-data-object:v0.10.0"
+      command:
+        - create-data-object
+      args:
+        - "--output=yaml"
+      env:
+        - name: DATA_OBJECT_MANIFEST
+          value: $(params.manifest)
+        - name: DATA_OBJECT_NAMESPACE
+          value: $(params.namespace)
+        - name: WAIT_FOR_SUCCESS
+          value: $(params.waitForSuccess)
+        - name: ALLOW_REPLACE
+          value: $(params.allowReplace)
 
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -293,13 +287,19 @@ metadata:
 rules:
   - verbs:
       - get
-      - list
-      - watch
       - create
+      - delete
     apiGroups:
       - cdi.kubevirt.io
     resources:
       - datavolumes
+      - datasources
+  - verbs:
+      - create
+    apiGroups:
+      - ""
+    resources:
+      - pods
 
 ---
 apiVersion: v1
@@ -352,7 +352,11 @@ spec:
       default: ""
       type: string
     - name: startVM
-      description: Set to true or false to start / not start vm after creation.
+      description: Set to true or false to start / not start vm after creation. In case of runStrategy is set to Always, startVM flag is ignored.
+      default: ""
+      type: string
+    - name: runStrategy
+      description: Set runStrategy to VM. If runStrategy is set, vm.spec.running attribute is set to nil.
       default: ""
       type: string
     - name: dataVolumes
@@ -378,7 +382,7 @@ spec:
       description: The namespace of a VM that was created.
   steps:
     - name: createvm
-      image: "quay.io/kubevirt/tekton-task-create-vm:v0.5.0"
+      image: "quay.io/kubevirt/tekton-task-create-vm:v0.10.0"
       command:
         - create-vm
       args:
@@ -398,6 +402,8 @@ spec:
           value: $(params.namespace)
         - name: START_VM
           value: $(params.startVM)
+        - name: RUN_STRATEGY
+          value: $(params.runStrategy)
 
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -502,7 +508,11 @@ spec:
       default: ""
       type: string
     - name: startVM
-      description: Set to true or false to start / not start vm after creation.
+      description: Set to true or false to start / not start vm after creation. In case of runStrategy is set to Always, startVM flag is ignored.
+      default: ""
+      type: string
+    - name: runStrategy
+      description: Set runStrategy to VM. If runStrategy is set, vm.spec.running attribute is set to nil.
       default: ""
       type: string
     - name: dataVolumes
@@ -528,7 +538,7 @@ spec:
       description: The namespace of a VM that was created.
   steps:
     - name: createvm
-      image: "quay.io/kubevirt/tekton-task-create-vm:v0.5.0"
+      image: "quay.io/kubevirt/tekton-task-create-vm:v0.10.0"
       command:
         - create-vm
       args:
@@ -552,6 +562,8 @@ spec:
           value: $(params.vmNamespace)
         - name: START_VM
           value: $(params.startVM)
+        - name: RUN_STRATEGY
+          value: $(params.runStrategy)
 
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -659,7 +671,7 @@ spec:
       default: ""
   steps:
     - name: run-virt-customize
-      image: "quay.io/kubevirt/tekton-task-disk-virt-customize:v0.5.0"
+      image: "quay.io/kubevirt/tekton-task-disk-virt-customize:v0.10.0"
       command:
         - entrypoint
       args:
@@ -728,7 +740,7 @@ spec:
       default: ""
   steps:
     - name: run-virt-sysprep
-      image: "quay.io/kubevirt/tekton-task-disk-virt-sysprep:v0.5.0"
+      image: "quay.io/kubevirt/tekton-task-disk-virt-sysprep:v0.10.0"
       command:
         - entrypoint
       args:
@@ -805,7 +817,7 @@ spec:
       default: ""
   steps:
     - name: execute-in-vm
-      image: "quay.io/kubevirt/tekton-task-execute-in-vm:v0.5.0"
+      image: "quay.io/kubevirt/tekton-task-execute-in-vm:v0.10.0"
       command:
         - entrypoint
       args:
@@ -927,7 +939,7 @@ spec:
       description: The namespace of a private key secret.
   steps:
     - name: generate-ssh-keys
-      image: "quay.io/kubevirt/tekton-task-generate-ssh-keys:v0.5.0"
+      image: "quay.io/kubevirt/tekton-task-generate-ssh-keys:v0.10.0"
       command:
         - entrypoint
         - '--'
@@ -988,6 +1000,9 @@ metadata:
     cpuCores.params.task.kubevirt.io/type: number
     cpuThreads.params.task.kubevirt.io/type: number
     memory.params.task.kubevirt.io/type: memory
+    deleteDatavolumeTemplate.params.task.kubevirt.io/type: boolean
+    deleteTemplateParameters.params.task.kubevirt.io/type: boolean
+    deleteTemplate.params.task.kubevirt.io/type: boolean
   labels:
     task.kubevirt.io/type: modify-vm-template
     task.kubevirt.io/category: modify-vm-template
@@ -1000,18 +1015,23 @@ spec:
     - name: templateNamespace
       description: Namespace of an source OpenShift template. (defaults to active namespace)
       type: string
+      default: ""
     - name: cpuSockets
       description: Number of CPU sockets
       type: string
+      default: "0"
     - name: cpuCores
       description: Number of CPU cores
       type: string
+      default: "0"
     - name: cpuThreads
       description: Number of CPU threads
       type: string
+      default: "0"
     - name: memory
       description: Number of memory vm can use
       type: string
+      default: ""
     - description: Template labels. If template contains same label, it will be replaced. Each param should have KEY:VAL format. Eg ["key:value", "key:value"].
       name: templateLabels
       type: array
@@ -1032,10 +1052,38 @@ spec:
       name: disks
       type: array
       default: []
+    - name: deleteDisks
+      description: Set to "true" or "false" if task should delete VM disks. New disks (from disks parameter) are applied, after old disks are deleted.
+      default: 'false'
+      type: string
     - description: 'VM volumes in json format, replace vm volume if same name, otherwise new volume is appended. Eg [{"name": "virtiocontainerdisk", "containerDisk": {"image": "kubevirt/virtio-container-disk"}}]'
       name: volumes
       type: array
       default: []
+    - description: 'Datavolume templates in json format, replace datavolume if same name, otherwise new datavolume is appended. If deleteDatavolumeTemplate is set, first datavolumes are deleted and then datavolumes from this attribute are added. Eg [{"apiVersion": "cdi.kubevirt.io/v1beta1", "kind": "DataVolume", "metadata":{"name": "test1"}, "spec": {"source": {"http": {"url": "test.somenonexisting"}}}}]'
+      name: datavolumeTemplates
+      type: array
+      default: []
+    - name: deleteDatavolumeTemplate
+      description: Set to "true" or "false" if task should delete datavolume template in template and all associated volumes and disks.
+      default: 'false'
+      type: string
+    - name: deleteVolumes
+      description: Set to "true" or "false" if task should delete VM volumes. New volumes (from volumes parameter) are applied, after old volumes are deleted.
+      default: 'false'
+      type: string
+    - name: templateParameters
+      description: 'Definition of template parameters. Eg [{"description": "VM name", "name": "NAME"}]'
+      default: []
+      type: array
+    - name: deleteTemplateParameters
+      description: Set to "true" or "false" if task should delete template parameters. New parameters (from templateParameters parameter) are applied, after old parameters are deleted.
+      default: 'false'
+      type: string
+    - name: deleteTemplate
+      description: Set to `true` or `false` if task should delete the specified template. If set to 'true' the template will be deleted and all other parameters are ignored.
+      default: 'false'
+      type: string
 
   results:
     - name: name
@@ -1044,7 +1092,7 @@ spec:
       description: The namespace of a template that was updated.
   steps:
     - name: modifyvmtemplate
-      image: "quay.io/kubevirt/tekton-task-modify-vm-template:v0.5.0"
+      image: "quay.io/kubevirt/tekton-task-modify-vm-template:v0.10.0"
       command:
         - modify-vm-template
       args:
@@ -1061,6 +1109,10 @@ spec:
         - $(params.disks)
         - "--volumes"
         - $(params.volumes)
+        - "--datavolumeTemplates"
+        - $(params.datavolumeTemplates)
+        - "--templateParameters"
+        - $(params.templateParameters)
       env:
         - name: TEMPLATE_NAME
           value: $(params.templateName)
@@ -1074,6 +1126,16 @@ spec:
           value: $(params.cpuThreads)
         - name: MEMORY
           value: $(params.memory)
+        - name: DELETE_DATAVOLUME_TEMPLATE
+          value: $(params.deleteDatavolumeTemplate)
+        - name: DELETE_DISKS
+          value: $(params.deleteDisks)
+        - name: DELETE_VOLUMES
+          value: $(params.deleteVolumes)
+        - name: DELETE_TEMPLATE_PARAMETERS
+          value: $(params.deleteTemplateParameters)
+        - name: DELETE_TEMPLATE
+          value: $(params.deleteTemplate)
 
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -1085,6 +1147,7 @@ rules:
       - get
       - list
       - patch
+      - delete
     apiGroups:
       - template.openshift.io
     resources:
@@ -1136,7 +1199,7 @@ spec:
       description: A label selector expression to decide if the VirtualMachineInstance (VMI) is in a failed state. Eg. "status.phase in (Failed, Unknown)". It is evaluated on each VMI update and will result in this task failing if true.
   steps:
     - name: wait-for-vmi-status
-      image: "quay.io/kubevirt/tekton-task-wait-for-vmi-status:v0.5.0"
+      image: "quay.io/kubevirt/tekton-task-wait-for-vmi-status:v0.10.0"
       command:
         - entrypoint
       env:

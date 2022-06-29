@@ -47,16 +47,16 @@ var _ = Describe("environments", func() {
 		Expect(res).To(Equal(DeafultCopyTemplateIMG), "COPY_TEMPLATE_IMG should equal")
 	})
 
-	It("should return correct value for CREATE_DATAVOLUME_IMG when variable is set", func() {
-		os.Setenv(CreateDatavolumeImageKey, testURL)
-		res := GetCreateDatavolumeImage()
-		Expect(res).To(Equal(testURL), "CREATE_DATAVOLUME_IMG should equal")
-		os.Unsetenv(CreateDatavolumeImageKey)
+	It("should return correct value for CREATE_DATAOBJECT_IMG when variable is set", func() {
+		os.Setenv(CreateDataObjectImageKey, testURL)
+		res := GetCreateDataObjectImage()
+		Expect(res).To(Equal(testURL), "CREATE_DATAOBJECT_IMG should equal")
+		os.Unsetenv(CreateDataObjectImageKey)
 	})
 
-	It("should return correct value for CREATE_DATAVOLUME_IMG when variable is not set", func() {
-		res := GetCreateDatavolumeImage()
-		Expect(res).To(Equal(DeafultCreateDatavolumeIMG), "CREATE_DATAVOLUME_IMG should equal")
+	It("should return correct value for CREATE_DATAOBJECT_IMG when variable is not set", func() {
+		res := GetCreateDataObjectImage()
+		Expect(res).To(Equal(DeafultCreateDataObjectIMG), "CREATE_DATAOBJECT_IMG should equal")
 	})
 
 	It("should return correct value for CREATE_VM_IMG when variable is set", func() {

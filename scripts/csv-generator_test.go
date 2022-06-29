@@ -27,7 +27,7 @@ var _ = Describe("csv generator", func() {
 		diskVirtSysprepImage:   "testSysprepImage",
 		diskVirtCustomizeImage: "testCustomizeImage",
 		createVMImage:          "testCreateVMImage",
-		createDatavolumeImage:  "testDatavolumeImage",
+		createDataObjectImage:  "testDataObjectImage",
 		copyTemplateImage:      "testCopyTemplateImage",
 		cleanupVMImage:         "testCleanupImage",
 	}
@@ -35,7 +35,7 @@ var _ = Describe("csv generator", func() {
 		{Name: environment.OperatorVersionKey},
 		{Name: environment.CleanupVMImageKey},
 		{Name: environment.CopyTemplateImageKey},
-		{Name: environment.CreateDatavolumeImageKey},
+		{Name: environment.CreateDataObjectImageKey},
 		{Name: environment.CreateVMImageKey},
 		{Name: environment.DiskVirtCustomizeImageKey},
 		{Name: environment.DiskVirtSysprepImageKey},
@@ -91,8 +91,8 @@ var _ = Describe("csv generator", func() {
 					if envVariable.Name == environment.CopyTemplateImageKey {
 						Expect(envVariable.Value).To(Equal(flags.copyTemplateImage))
 					}
-					if envVariable.Name == environment.CreateDatavolumeImageKey {
-						Expect(envVariable.Value).To(Equal(flags.createDatavolumeImage))
+					if envVariable.Name == environment.CreateDataObjectImageKey {
+						Expect(envVariable.Value).To(Equal(flags.createDataObjectImage))
 					}
 					if envVariable.Name == environment.CreateVMImageKey {
 						Expect(envVariable.Value).To(Equal(flags.createVMImage))

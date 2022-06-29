@@ -43,6 +43,14 @@ rules:
 - apiGroups:
   - cdi.kubevirt.io
   resources:
+  - datasources
+  verbs:
+  - create
+  - delete
+  - get
+- apiGroups:
+  - cdi.kubevirt.io
+  resources:
   - datavolumes
   verbs:
   - '*'
@@ -177,6 +185,7 @@ rules:
   - templates
   verbs:
   - create
+  - delete
   - get
   - list
   - patch

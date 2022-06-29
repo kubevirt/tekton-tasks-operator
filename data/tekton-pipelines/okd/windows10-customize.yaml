@@ -274,7 +274,7 @@ spec:
       timeout: 1h
       taskRef:
         kind: ClusterTask
-        name: create-datavolume-from-manifest
+        name: create-data-object
     - name: cleanup-vm
       params:
         - name: vmName
