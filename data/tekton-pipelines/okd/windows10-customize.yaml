@@ -192,13 +192,7 @@ spec:
                     "name": "${NAME}"
                 },
                 "spec": {
-                  "storage": {
-                    "resources": {
-                      "requests": {
-                        "storage": "20Gi"
-                      }
-                    }
-                  },
+                  "storage": {},
                   "sourceRef": {
                     "kind": "DataSource",
                     "name": "${DATA_SOURCE_NAME}",
@@ -275,18 +269,6 @@ spec:
       taskRef:
         kind: ClusterTask
         name: create-data-object
-    - name: cleanup-vm
-      params:
-        - name: vmName
-          value: $(tasks.create-vm-from-template.results.name)
-        - name: delete
-          value: "true"
-      runAfter:
-        - create-base-dv
-      timeout: 10m
-      taskRef:
-        kind: ClusterTask
-        name: cleanup-vm
     - name: copy-template-golden
       params:
         - name: sourceTemplateName
@@ -359,6 +341,17 @@ spec:
       taskRef:
         kind: ClusterTask
         name: modify-vm-template
+  finally:
+    - name: cleanup-vm
+      params:
+        - name: vmName
+          value: $(tasks.create-vm-from-template.results.name)
+        - name: delete
+          value: "true"
+      timeout: 10m
+      taskRef:
+        kind: ClusterTask
+        name: cleanup-vm
   results:
     - name: customizeTemplateName
       description: Name of the created customize Template

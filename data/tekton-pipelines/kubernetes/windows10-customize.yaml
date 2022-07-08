@@ -149,10 +149,7 @@ spec:
             metadata:
               generateName: windows10-base-
             spec:
-              storage:
-                resources:
-                  requests:
-                    storage: 20Gi
+              storage: {}
               source:
                 pvc:
                   name: $(params.sourceDataVolumeName)
@@ -270,14 +267,13 @@ spec:
       taskRef:
         kind: ClusterTask
         name: wait-for-vmi-status
+  finally:
     - name: cleanup-vm
       params:
         - name: vmName
           value: $(tasks.create-vm-from-manifest.results.name)
         - name: delete
           value: "true"
-      runAfter:
-        - wait-for-vmi-status
       timeout: 10m
       taskRef:
         kind: ClusterTask
