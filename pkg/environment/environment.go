@@ -39,7 +39,7 @@ const (
 	DeafultDiskVirtSysprepIMG   = "quay.io/kubevirt/tekton-task-disk-virt-sysprep:" + operands.TektonTasksVersion
 	DeafultDiskVirtCustomizeIMG = "quay.io/kubevirt/tekton-task-disk-virt-customize:" + operands.TektonTasksVersion
 	DeafultCreateVMIMG          = "quay.io/kubevirt/tekton-task-create-vm:" + operands.TektonTasksVersion
-	DeafultCreateDataObjectIMG  = "quay.io/kubevirt/tekton-task-create-data-object" + operands.TektonTasksVersion
+	DeafultCreateDataObjectIMG  = "quay.io/kubevirt/tekton-task-create-data-object:" + operands.TektonTasksVersion
 	DeafultCopyTemplateIMG      = "quay.io/kubevirt/tekton-task-copy-template:" + operands.TektonTasksVersion
 	DeafultCleanupVMIMG         = "quay.io/kubevirt/tekton-task-execute-in-vm:" + operands.TektonTasksVersion
 	GenerateSSHKeysIMG          = "quay.io/kubevirt/tekton-task-generate-ssh-keys:" + operands.TektonTasksVersion
