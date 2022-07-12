@@ -410,10 +410,7 @@ spec:
               annotations:
                 cdi.kubevirt.io/storage.bind.immediate.requested: \"true\"
             spec:
-              storage:
-                resources:
-                  requests:
-                    storage: 20Gi
+              storage: {}
               source:
                 pvc:
                   name: $(tasks.create-vm-from-template.results.name)-rootdisk
@@ -426,14 +423,13 @@ spec:
       taskRef:
         kind: ClusterTask
         name: create-data-object
+  finally:
     - name: cleanup-vm
       params:
         - name: vmName
           value: $(tasks.create-vm-from-template.results.name)
         - name: delete
           value: "true"
-      runAfter:
-        - create-base-dv
       timeout: 10m
       taskRef:
         kind: ClusterTask
