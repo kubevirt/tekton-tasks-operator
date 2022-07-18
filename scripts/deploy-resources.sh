@@ -43,6 +43,23 @@ oc wait -n kubevirt ssp ssp-sample --for condition=Available --timeout 10m
 # wait for tekton pipelines
 oc rollout status -n openshift-operators deployment/openshift-pipelines-operator --timeout 10m
 
+# wait until clustertasks tekton CRD is properly deployed
+timeout 10m bash <<- EOF
+  until oc get crd clustertasks.tekton.dev; do
+    sleep 5
+  done
+EOF
+
+# wait until tekton pipelines webhook is created
+timeout 10m bash <<- EOF
+  until oc get deployment tekton-pipelines-webhook -n openshift-pipelines; do
+    sleep 5
+  done
+EOF
+
+# wait until tekton pipelines webhook is online
+oc wait -n openshift-pipelines deployment tekton-pipelines-webhook --for condition=Available --timeout 10m
+
 # Wait for kubevirt to be available
 oc rollout status -n cdi deployment/cdi-operator --timeout 10m
 oc wait -n kubevirt kv kubevirt --for condition=Available --timeout 10m
