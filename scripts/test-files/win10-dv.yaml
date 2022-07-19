@@ -1,0 +1,16 @@
+apiVersion: cdi.kubevirt.io/v1beta1
+kind: DataVolume
+metadata:
+  name: "iso-dv"
+  namespace: default
+spec:
+  source:
+      registry:
+        url: 'docker://quay.io/openshift-cnv/containerdisks:Win10_21H2_English_x64'
+        secretRef: "tekton-operator-container-disk-puller" 
+  pvc:
+    accessModes:
+      - ReadWriteOnce
+    resources:
+      requests:
+        storage: "7Gi"

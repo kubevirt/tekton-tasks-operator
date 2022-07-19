@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: http-server
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      run: http-server
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        run: http-server
+    spec:
+      containers:
+      - name: http-server
+        image: quay.io/kubevirt/tekton-tasks-http-server
+        ports:
+          - containerPort: 80
+        volumeMounts:
+          - mountPath: "/downloads"
+            name: iso-dv
+      volumes:
+        - name: iso-dv
+          persistentVolumeClaim:
+            claimName: iso-dv
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: http-server
+  namespace: default
+  labels:
+    run: http-server
+spec:
+  ports:
+  - port: 80
+    protocol: TCP
+  selector:
+    run: http-server
+--- 
+apiVersion: v1
+kind: Service
+metadata:
+  name: http-server
+  namespace: kubevirt
+spec:
+  type: ExternalName
+  externalName: http-server.default.svc.cluster.local
+
