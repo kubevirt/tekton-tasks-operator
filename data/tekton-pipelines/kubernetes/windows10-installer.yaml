@@ -1,3 +1,30 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: windows10-pipelines
+roleRef:
+  kind: ClusterRole
+  name: windows10-pipelines
+  apiGroup: rbac.authorization.k8s.io
+subjects:
+  - kind: ServiceAccount
+    name: pipeline
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: pipeline
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: windows10-pipelines
+rules:
+- apiGroups: ["kubevirt.io"]
+  resources: ["virtualmachines/finalizers"]
+  verbs: ["*"]
+  
+---
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -118,11 +145,6 @@ data:
 
     # Eject CD, to avoid that the unattend.xml on the CD is picked up by sysprep
     (New-Object -COMObject Shell.Application).NameSpace(17).ParseName("F:").InvokeVerb("Eject")
----
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: pipeline
 ---
 apiVersion: tekton.dev/v1beta1
 kind: Pipeline
