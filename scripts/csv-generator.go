@@ -51,7 +51,7 @@ type generatorFlags struct {
 	diskVirtSysprepImage   string
 	diskVirtCustomizeImage string
 	createVMImage          string
-	createDataObjectImage  string
+	modifyDataObjectImage  string
 	copyTemplateImage      string
 	cleanupVMImage         string
 	generateSSHKeys        string
@@ -89,7 +89,7 @@ func init() {
 	rootCmd.Flags().StringVar(&f.diskVirtSysprepImage, "disk-virt-sysprep-image", "", "Link to disk-virt-sysprep task image")
 	rootCmd.Flags().StringVar(&f.diskVirtCustomizeImage, "disk-virt-customize-image", "", "Link to disk-virt-customize task image")
 	rootCmd.Flags().StringVar(&f.createVMImage, "create-vm-image", "", "Link to create-vm task image")
-	rootCmd.Flags().StringVar(&f.createDataObjectImage, "create-data-object-image", "", "Link to create-data-object task image")
+	rootCmd.Flags().StringVar(&f.modifyDataObjectImage, "modify-data-object-image", "", "Link to modify-data-object task image")
 	rootCmd.Flags().StringVar(&f.copyTemplateImage, "copy-template-image", "", "Link to copy-template-image task image")
 	rootCmd.Flags().StringVar(&f.generateSSHKeys, "generate-ssh-keys", "", "Link to generate-ssh-keys task image")
 	rootCmd.Flags().StringVar(&f.cleanupVMImage, "cleanup-vm-image", "", "Link to cleanup-vm-image task image")
@@ -205,8 +205,8 @@ func buildRelatedImages(flags generatorFlags) ([]interface{}, error) {
 		relatedImages = append(relatedImages, relatedImage)
 	}
 
-	if flags.createDataObjectImage != "" {
-		relatedImage, err := buildRelatedImage(flags.createDataObjectImage, "create-data-object")
+	if flags.modifyDataObjectImage != "" {
+		relatedImage, err := buildRelatedImage(flags.modifyDataObjectImage, "modify-data-object")
 		if err != nil {
 			return nil, err
 		}
@@ -304,9 +304,9 @@ func updateContainerEnvVars(flags generatorFlags, container v1.Container) []v1.E
 			if flags.copyTemplateImage != "" {
 				envVariable.Value = flags.copyTemplateImage
 			}
-		case environment.CreateDataObjectImageKey:
-			if flags.createDataObjectImage != "" {
-				envVariable.Value = flags.createDataObjectImage
+		case environment.ModifyDataObjectImageKey:
+			if flags.modifyDataObjectImage != "" {
+				envVariable.Value = flags.modifyDataObjectImage
 			}
 		case environment.CreateVMImageKey:
 			if flags.createVMImage != "" {

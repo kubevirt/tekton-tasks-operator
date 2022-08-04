@@ -157,7 +157,7 @@ spec:
       timeout: 10m
       taskRef:
         kind: ClusterTask
-        name: create-data-object
+        name: modify-data-object
     - name: create-vm-from-manifest
       params:
         - name: manifest
