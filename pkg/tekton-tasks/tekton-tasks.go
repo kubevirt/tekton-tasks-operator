@@ -35,7 +35,7 @@ const (
 
 	cleanVMTaskName              = "cleanup-vm"
 	copyTemplateTaskName         = "copy-template"
-	createDataObjectTaskName     = "create-data-object"
+	modifyDataObjectTaskName     = "modify-data-object"
 	createVMFromTemplateTaskName = "create-vm-from-template"
 	diskVirtCustomizeTaskName    = "disk-virt-customize"
 	diskVirtSysprepTaskName      = "disk-virt-sysprep"
@@ -52,7 +52,7 @@ var AllowedTasks = map[string]func() string{
 	createVMFromManifestTaskName: environment.GetCreateVMImage,
 	cleanVMTaskName:              environment.GetCleanupVMImage,
 	copyTemplateTaskName:         environment.GetCopyTemplateImage,
-	createDataObjectTaskName:     environment.GetCreateDataObjectImage,
+	modifyDataObjectTaskName:     environment.GetModifyDataObjectImage,
 	createVMFromTemplateTaskName: environment.GetCreateVMImage,
 	diskVirtCustomizeTaskName:    environment.GetDiskVirtCustomizeImage,
 	diskVirtSysprepTaskName:      environment.GetDiskVirtSysprepImage,

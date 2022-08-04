@@ -43,7 +43,7 @@ spec:
       timeout: '2h'
       taskRef:
         kind: ClusterTask
-        name: create-data-object
+        name: modify-data-object
     - name: create-base-dv
       params:
         - name: manifest
@@ -66,7 +66,7 @@ spec:
           value: 'true'
       taskRef:
         kind: ClusterTask
-        name: create-data-object
+        name: modify-data-object
     - name: create-vm-from-manifest
       params:
         - name: manifest

@@ -268,7 +268,7 @@ spec:
       timeout: 1h
       taskRef:
         kind: ClusterTask
-        name: create-data-object
+        name: modify-data-object
     - name: copy-template-golden
       params:
         - name: sourceTemplateName

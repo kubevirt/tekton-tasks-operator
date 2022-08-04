@@ -219,7 +219,7 @@ func getMockedTestBundle() *tektonbundle.Bundle {
 				},
 			}, {
 				ObjectMeta: metav1.ObjectMeta{
-					Name: createDataObjectTaskName,
+					Name: modifyDataObjectTaskName,
 				},
 			}, {
 				ObjectMeta: metav1.ObjectMeta{
@@ -270,7 +270,7 @@ func getMockedTestBundle() *tektonbundle.Bundle {
 				},
 			}, {
 				ObjectMeta: metav1.ObjectMeta{
-					Name: createDataObjectTaskName + "-task",
+					Name: modifyDataObjectTaskName + "-task",
 				},
 			}, {
 				ObjectMeta: metav1.ObjectMeta{
@@ -321,7 +321,7 @@ func getMockedTestBundle() *tektonbundle.Bundle {
 				},
 			}, {
 				ObjectMeta: metav1.ObjectMeta{
-					Name: createDataObjectTaskName + "-task",
+					Name: modifyDataObjectTaskName + "-task",
 				},
 			}, {
 				ObjectMeta: metav1.ObjectMeta{
@@ -372,7 +372,7 @@ func getMockedTestBundle() *tektonbundle.Bundle {
 				},
 			}, {
 				ObjectMeta: metav1.ObjectMeta{
-					Name: createDataObjectTaskName + "-task",
+					Name: modifyDataObjectTaskName + "-task",
 				},
 			}, {
 				ObjectMeta: metav1.ObjectMeta{
