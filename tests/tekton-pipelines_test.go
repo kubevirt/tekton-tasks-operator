@@ -42,22 +42,9 @@ var _ = Describe("Tekton-pipelines", func() {
 			}
 		})
 
-		It("[test_id:TODO]operator should not create service accounts with pipelines in non ^openshift|kube namespace", func() {
-			liveSA := &v1.ServiceAccountList{}
-			Eventually(func() bool {
-				err := apiClient.List(ctx, liveSA,
-					client.MatchingLabels{
-						common.AppKubernetesManagedByLabel: common.AppKubernetesManagedByValue,
-						common.AppKubernetesComponentLabel: string(common.AppComponentTektonPipelines),
-					},
-				)
-				Expect(err).ToNot(HaveOccurred())
-				return len(liveSA.Items) == 0
-			}, tenSecondTimeout, time.Second).Should(BeTrue(), "there should be no service accounts deployed with pipelines")
-		})
-
 		It("[test_id:TODO]operator should create role bindings", func() {
 			liveRB := &rbac.RoleBindingList{}
+			roleBindingName := "windows10-pipelines"
 			Eventually(func() bool {
 				err := apiClient.List(ctx, liveRB,
 					client.MatchingLabels{
@@ -71,7 +58,9 @@ var _ = Describe("Tekton-pipelines", func() {
 
 			for _, rb := range liveRB.Items {
 				if _, ok := tektontasks.AllowedTasks[strings.TrimSuffix(rb.Name, "-task")]; !ok {
-					Expect(ok).To(BeTrue(), "only allowed role binding is deployed - "+rb.Name)
+					if ok = rb.Name != roleBindingName; ok {
+						Expect(ok).To(BeTrue(), "only allowed role binding is deployed - "+rb.Name)
+					}
 				}
 				Expect(rb.Labels[common.AppKubernetesManagedByLabel]).To(Equal(common.AppKubernetesManagedByValue), "managed by label should equal")
 			}

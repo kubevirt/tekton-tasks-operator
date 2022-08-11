@@ -130,6 +130,7 @@ var _ = Describe("Tekton-tasks", func() {
 
 		It("[test_id:TODO]operator should create cluster role", func() {
 			liveCR := &rbac.ClusterRoleList{}
+			clusterRoleName := "windows10-pipelines"
 			Eventually(func() bool {
 				err := apiClient.List(ctx, liveCR,
 					client.MatchingLabels{
@@ -141,9 +142,16 @@ var _ = Describe("Tekton-tasks", func() {
 			}, tenSecondTimeout, time.Second).Should(BeTrue())
 			for _, cr := range liveCR.Items {
 				if _, ok := tektontasks.AllowedTasks[strings.TrimSuffix(cr.Name, "-task")]; !ok {
-					Expect(ok).To(BeTrue(), "only allowed cluster role is deployed - "+cr.Name)
+					if ok = cr.Name != clusterRoleName; ok {
+						Expect(ok).To(BeTrue(), "only allowed cluster role is deployed - "+cr.Name)
+					}
 				}
-				Expect(cr.Labels[common.AppKubernetesComponentLabel]).To(Equal(string(common.AppComponentTektonTasks)), "component label should equal")
+
+				if cr.Name == clusterRoleName {
+					Expect(cr.Labels[common.AppKubernetesComponentLabel]).To(Equal(string(common.AppComponentTektonPipelines)), "component label should equal")
+				} else {
+					Expect(cr.Labels[common.AppKubernetesComponentLabel]).To(Equal(string(common.AppComponentTektonTasks)), "component label should equal")
+				}
 				Expect(cr.Labels[common.AppKubernetesManagedByLabel]).To(Equal(common.AppKubernetesManagedByValue), "managed by label should equal")
 			}
 		})
