@@ -204,10 +204,6 @@ func reconcileClusterRolesFuncs(r *common.Request, crs []rbac.ClusterRole) []com
 	funcs := make([]common.ReconcileFunc, 0, len(crs))
 	for i := range crs {
 		cr := &crs[i]
-		// deploy windows10-pipelines cluster role only in `^(openshift|kube)-` namespaces
-		if !namespaceRegex.MatchString(r.Instance.Spec.Pipelines.Namespace) && cr.Name == "windows10-pipelines" {
-			continue
-		}
 		funcs = append(funcs, func(request *common.Request) (common.ReconcileResult, error) {
 			return common.CreateOrUpdate(request).
 				ClusterResource(cr).
@@ -229,10 +225,6 @@ func reconcileRoleBindingsFuncs(r *common.Request, rbs []rbac.RoleBinding) []com
 	funcs := make([]common.ReconcileFunc, 0, len(rbs))
 	for i := range rbs {
 		rb := &rbs[i]
-		// deploy windows10-pipelines role binding only in `^(openshift|kube)-` namespaces
-		if !namespaceRegex.MatchString(r.Instance.Spec.Pipelines.Namespace) && rb.Name == "windows10-pipelines" {
-			continue
-		}
 		funcs = append(funcs, func(request *common.Request) (common.ReconcileResult, error) {
 			namespace := request.Instance.Namespace
 			if rb.Namespace == "" {
