@@ -2,6 +2,7 @@ package tests
 
 import (
 	"context"
+	"os"
 	"reflect"
 	"testing"
 	"time"
@@ -23,9 +24,10 @@ import (
 )
 
 var (
-	tenSecondTimeout = 10 * time.Second
-	timeout          = 10 * time.Minute
-	testScheme       *runtime.Scheme
+	tenSecondTimeout       = 10 * time.Second
+	timeout                = 10 * time.Minute
+	testScheme             *runtime.Scheme
+	envExistingCrNamespace = "TEST_EXISTING_CR_NAMESPACE"
 )
 
 type TestSuiteStrategy interface {
@@ -68,7 +70,7 @@ func (t *newTektonStrategy) CreateTTOIfNeeded() {
 			},
 			Spec: tekton.TektonTasksSpec{
 				Pipelines: tekton.Pipelines{
-					Namespace: "kubevirt",
+					Namespace: t.GetNamespace(),
 				},
 				FeatureGates: tekton.FeatureGates{
 					DeployTektonTaskResources: false,
@@ -98,6 +100,10 @@ func (t *newTektonStrategy) GetTTO() *tekton.TektonTasks {
 
 func (t *newTektonStrategy) GetNamespace() string {
 	if t.tekton == nil {
+		if existingCrNamespace := os.Getenv(envExistingCrNamespace); existingCrNamespace != "" {
+			return existingCrNamespace
+		}
+		//return default namespace
 		return "kubevirt"
 	}
 	return t.tekton.Namespace
@@ -124,6 +130,10 @@ var _ = BeforeSuite(func() {
 
 	// Wait to finish deployment before running any tests
 	waitUntilDeployed()
+})
+
+var _ = AfterSuite(func() {
+	deleteTestTekton()
 })
 
 func setupApiClient() {
@@ -159,6 +169,12 @@ func waitUntilDeployed() {
 		return tekton.Status.Phase == lifecycleapi.PhaseDeployed
 	}, timeout, time.Second).Should(BeTrue())
 	deploymentTimedOut = false
+}
+
+func deleteTestTekton() {
+	tto := strategy.GetTTO()
+
+	Expect(apiClient.Delete(ctx, tto)).To(Succeed())
 }
 
 func createOrUpdateTekton(tek *tekton.TektonTasks) {
