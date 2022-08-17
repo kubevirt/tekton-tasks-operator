@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"reflect"
 	"strconv"
+	"sync"
 
 	"github.com/go-logr/logr"
 	conditionsv1 "github.com/openshift/custom-resource-status/conditions/v1"
@@ -175,17 +176,35 @@ func (r *tektonTasksReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	return ctrl.Result{}, nil
 }
 
+type reconcileResult struct {
+	result []common.ReconcileResult
+	err    error
+}
+
 func (r *tektonTasksReconciler) reconcileOperands(tektonRequest *common.Request) ([]common.ReconcileResult, error) {
 	// Reconcile all operands
 	allReconcileResults := make([]common.ReconcileResult, 0, len(r.operands))
-	for _, operand := range r.operands {
+	results := make([]reconcileResult, len(r.operands))
+
+	wg := sync.WaitGroup{}
+	for i, operand := range r.operands {
 		tektonRequest.Logger.V(1).Info(fmt.Sprintf("Reconciling operand: %s", operand.Name()))
-		reconcileResults, err := operand.Reconcile(tektonRequest)
-		if err != nil {
-			tektonRequest.Logger.Info(fmt.Sprintf("Operand reconciliation failed: %s", err.Error()))
-			return nil, err
+
+		wg.Add(1)
+		go func(operand operands.Operand, index int) {
+			defer wg.Done()
+			results[index].result, results[index].err = operand.Reconcile(tektonRequest)
+		}(operand, i)
+	}
+	wg.Wait()
+
+	// Handle errors from goroutines
+	for _, res := range results {
+		if res.err != nil {
+			tektonRequest.Logger.Info(fmt.Sprintf("Operand reconciliation failed: %s", res.err.Error()))
+			return nil, res.err
 		}
-		allReconcileResults = append(allReconcileResults, reconcileResults...)
+		allReconcileResults = append(allReconcileResults, res.result...)
 	}
 
 	return allReconcileResults, nil
