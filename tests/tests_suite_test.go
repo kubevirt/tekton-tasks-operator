@@ -17,6 +17,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
+	v1reporter "kubevirt.io/client-go/reporter"
 	lifecycleapi "kubevirt.io/controller-lifecycle-operator-sdk/pkg/sdk/api"
 	qe_reporters "kubevirt.io/qe-tools/pkg/ginkgo-reporters"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -215,17 +216,24 @@ func createOrUpdateTekton(tek *tekton.TektonTasks) {
 		return err
 	}, timeout, time.Second).ShouldNot(HaveOccurred())
 }
-func TestFunctional(t *testing.T) {
-	var reporters []Reporter
 
+var afterSuiteReporters []Reporter
+
+func TestFunctional(t *testing.T) {
 	if qe_reporters.JunitOutput != "" {
-		reporters = append(reporters, ginkgo_reporters.NewJUnitReporter(qe_reporters.JunitOutput))
+		afterSuiteReporters = append(afterSuiteReporters, v1reporter.NewV1JUnitReporter(qe_reporters.JunitOutput))
 	}
 
 	if qe_reporters.Polarion.Run {
-		reporters = append(reporters, &qe_reporters.Polarion)
+		afterSuiteReporters = append(afterSuiteReporters, &qe_reporters.Polarion)
 	}
 
 	RegisterFailHandler(Fail)
-	RunSpecsWithDefaultAndCustomReporters(t, "Functional test suite", reporters)
+	RunSpecs(t, "Functional test suite")
 }
+
+var _ = ReportAfterSuite("TestFunctional", func(report Report) {
+	for _, reporter := range afterSuiteReporters {
+		ginkgo_reporters.ReportViaDeprecatedReporter(reporter, report)
+	}
+})
