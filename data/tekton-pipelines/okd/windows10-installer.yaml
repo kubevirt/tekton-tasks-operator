@@ -34,15 +34,6 @@ metadata:
   name: windows10-pipelines
 rules:
   - verbs:
-      - get
-      - list
-      - watch
-      - create
-    apiGroups:
-      - cdi.kubevirt.io
-    resources:
-      - datavolumes
-  - verbs:
       - create
     apiGroups:
       - ""
@@ -95,12 +86,6 @@ rules:
       - cdi.kubevirt.io
     resources:
       - datavolumes
-  - verbs:
-      - 'update'
-    apiGroups:
-      - subresources.kubevirt.io
-    resources:
-      - virtualmachines/start
   - verbs:
       - update
     apiGroups:
@@ -415,6 +400,8 @@ spec:
                   namespace: $(tasks.create-vm-from-template.results.namespace)
         - name: waitForSuccess
           value: "true"
+        - name: allowReplace
+          value: "true"
       runAfter:
         - wait-for-vmi-status
       timeout: 1h
@@ -432,6 +419,17 @@ spec:
       taskRef:
         kind: ClusterTask
         name: cleanup-vm
+    - name: delete-template
+      params:
+        - name: templateName
+          value: $(params.installerTemplateName)
+        - name: templateNamespace
+          value: $(tasks.modify-vm-template.results.namespace)
+        - name: deleteTemplate
+          value: "true"
+      taskRef:
+        kind: ClusterTask
+        name: modify-vm-template
   results:
     - name: installerTemplateName
       description: Name of the created installer Template

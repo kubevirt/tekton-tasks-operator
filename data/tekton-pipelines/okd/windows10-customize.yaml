@@ -352,13 +352,18 @@ spec:
       taskRef:
         kind: ClusterTask
         name: cleanup-vm
+    - name: delete-template-customize
+      params:
+        - name: templateName
+          value: $(params.customizeTemplateName)
+        - name: templateNamespace
+          value: $(tasks.copy-template-customize.results.namespace)
+        - name: deleteTemplate
+          value: "true"
+      taskRef:
+        kind: ClusterTask
+        name: modify-vm-template
   results:
-    - name: customizeTemplateName
-      description: Name of the created customize Template
-      value: $(tasks.copy-template-customize.results.name)
-    - name: customizeTemplateNamespace
-      description: Namespace of the created customize Template
-      value: $(tasks.copy-template-customize.results.namespace)
     - name: baseDvName
       description: Name of the created base DataVolume
       value: $(tasks.create-base-dv.results.name)
