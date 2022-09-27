@@ -392,6 +392,7 @@ spec:
               namespace: $(params.baseDvNamespace)
               annotations:
                 cdi.kubevirt.io/storage.bind.immediate.requested: \"true\"
+                cdi.kubevirt.io/storage.deleteAfterCompletion: "false"
             spec:
               storage: {}
               source:

@@ -252,6 +252,7 @@ spec:
               generateName: windows10-base-
               annotations:
                 cdi.kubevirt.io/storage.bind.immediate.requested: \"true\"
+                cdi.kubevirt.io/storage.deleteAfterCompletion: "false"
             spec:
               storage:
                 resources:
