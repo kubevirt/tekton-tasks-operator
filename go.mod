@@ -5,7 +5,7 @@ go 1.18
 require (
 	github.com/blang/semver/v4 v4.0.0
 	github.com/ghodss/yaml v1.0.0
-	github.com/go-logr/logr v1.2.2
+	github.com/go-logr/logr v1.2.3
 	github.com/kubevirt/tekton-tasks-operator/api v0.0.0
 	github.com/onsi/ginkgo/v2 v2.1.3
 	github.com/onsi/gomega v1.18.1
@@ -18,10 +18,11 @@ require (
 	github.com/spf13/cobra v1.3.0
 	github.com/tektoncd/pipeline v0.33.1
 	gopkg.in/yaml.v2 v2.4.0
-	k8s.io/api v0.23.4
+	k8s.io/api v0.23.5
 	k8s.io/apiextensions-apiserver v0.23.1
-	k8s.io/apimachinery v0.23.4
-	k8s.io/client-go v1.5.2
+	k8s.io/apimachinery v0.23.5
+	k8s.io/client-go v12.0.0+incompatible
+	kubevirt.io/client-go v0.56.0
 	kubevirt.io/controller-lifecycle-operator-sdk v0.2.3
 	kubevirt.io/qe-tools v0.1.8
 	sigs.k8s.io/controller-runtime v0.11.1
@@ -39,7 +40,7 @@ require (
 	github.com/census-instrumentation/opencensus-proto v0.3.0 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/emicklei/go-restful v2.15.0+incompatible // indirect
+	github.com/emicklei/go-restful v2.16.0+incompatible // indirect
 	github.com/evanphx/json-patch v4.12.0+incompatible // indirect
 	github.com/evanphx/json-patch/v5 v5.6.0 // indirect
 	github.com/fsnotify/fsnotify v1.5.1 // indirect
@@ -78,7 +79,7 @@ require (
 	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/multierr v1.7.0 // indirect
 	go.uber.org/zap v1.19.1 // indirect
-	golang.org/x/net v0.0.0-20220127200216-cd36cc0744dd // indirect
+	golang.org/x/net v0.0.0-20220225172249-27dd8689420f // indirect
 	golang.org/x/oauth2 v0.0.0-20220223155221-ee480838109b // indirect
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c // indirect
 	golang.org/x/sys v0.0.0-20220223155357-96fed51e1446 // indirect
