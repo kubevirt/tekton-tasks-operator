@@ -52,13 +52,13 @@ EOF
 
 # wait until tekton pipelines webhook is created
 timeout 10m bash <<- EOF
-  until oc get deployment tekton-pipelines-webhook -n openshift-pipelines; do
+  until oc get deployment tekton-operator-webhook -n openshift-pipelines; do
     sleep 5
   done
 EOF
 
 # wait until tekton pipelines webhook is online
-oc wait -n openshift-pipelines deployment tekton-pipelines-webhook --for condition=Available --timeout 10m
+oc wait -n openshift-pipelines deployment tekton-operator-webhook --for condition=Available --timeout 10m
 
 # Wait for kubevirt to be available
 oc rollout status -n cdi deployment/cdi-operator --timeout 10m
