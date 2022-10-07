@@ -36,4 +36,6 @@ COPY data/ data/
 # Copy csv generator
 COPY --from=builder /workspace/bin/csv-generator .
 
+USER 1001
+
 ENTRYPOINT ["/manager"]
