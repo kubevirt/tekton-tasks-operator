@@ -21,7 +21,7 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
 subjects:
   - kind: ServiceAccount
-    name: pipeline
+    name: modify-data-object-task
 ---
 apiVersion: v1
 kind: ServiceAccount
