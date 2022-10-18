@@ -1,6 +1,6 @@
 module github.com/kubevirt/tekton-tasks-operator
 
-go 1.18
+go 1.19
 
 require (
 	github.com/blang/semver/v4 v4.0.0
@@ -19,10 +19,10 @@ require (
 	github.com/tektoncd/pipeline v0.33.1
 	gopkg.in/yaml.v2 v2.4.0
 	k8s.io/api v0.23.5
-	k8s.io/apiextensions-apiserver v0.23.1
+	k8s.io/apiextensions-apiserver v0.23.5
 	k8s.io/apimachinery v0.23.5
 	k8s.io/client-go v12.0.0+incompatible
-	kubevirt.io/client-go v0.56.0
+	kubevirt.io/client-go v0.58.0
 	kubevirt.io/controller-lifecycle-operator-sdk v0.2.3
 	kubevirt.io/qe-tools v0.1.8
 	sigs.k8s.io/controller-runtime v0.11.1
@@ -94,7 +94,7 @@ require (
 	google.golang.org/protobuf v1.27.1 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
-	k8s.io/component-base v0.23.1 // indirect
+	k8s.io/component-base v0.23.5 // indirect
 	k8s.io/klog/v2 v2.40.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20220124234850-424119656bbf // indirect
 	k8s.io/utils v0.0.0-20220210201930-3a6ce19ff2f9 // indirect
