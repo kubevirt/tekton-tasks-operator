@@ -7,9 +7,11 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
+	tekton "github.com/kubevirt/tekton-tasks-operator/api/v1alpha1"
 	"github.com/kubevirt/tekton-tasks-operator/pkg/common"
 	"github.com/kubevirt/tekton-tasks-operator/pkg/operands"
 	tektontasks "github.com/kubevirt/tekton-tasks-operator/pkg/tekton-tasks"
+	conditionsv1 "github.com/openshift/custom-resource-status/conditions/v1"
 	pipeline "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	v1 "k8s.io/api/core/v1"
 	rbac "k8s.io/api/rbac/v1"
@@ -254,6 +256,49 @@ var _ = Describe("Tekton-tasks", func() {
 				Expect(err).ToNot(HaveOccurred())
 				return len(liveRB.Items) == 0
 			}, tenSecondTimeout, time.Second).Should(BeTrue(), "there should be no role bindings left")
+		})
+	})
+	Context("multiple CRs deployed", func() {
+		BeforeEach(func() {
+			strategy.createTekton("tto-test-1")
+			strategy.createTekton("tto-test-2")
+
+			Eventually(func() bool {
+				ttos := tekton.TektonTasksList{}
+				err := apiClient.List(ctx, &ttos)
+				Expect(err).ToNot(HaveOccurred())
+				return len(ttos.Items) == 2
+			}, 60*time.Second, 2*time.Second).Should(BeTrue(), "there should be 2 CRs")
+			time.Sleep(2 * time.Second)
+		})
+
+		AfterEach(func() {
+			tektonTasksCRList := &tekton.TektonTasksList{}
+			Expect(apiClient.List(ctx, tektonTasksCRList)).To(Succeed())
+
+			for _, tekton := range tektonTasksCRList.Items {
+				deleteTekton(&tekton)
+			}
+		})
+
+		It("check if correct status is set for TTO", func() {
+			tektonTasksCRList := &tekton.TektonTasksList{}
+			apiClient.List(ctx, tektonTasksCRList)
+
+			for _, item := range tektonTasksCRList.Items {
+				for _, condition := range item.Status.Conditions {
+					if condition.Type == conditionsv1.ConditionAvailable {
+						Expect(condition.Status).To(Equal(v1.ConditionFalse))
+					}
+					if condition.Type == conditionsv1.ConditionProgressing {
+						Expect(condition.Status).To(Equal(v1.ConditionFalse))
+					}
+					if condition.Type == conditionsv1.ConditionDegraded {
+						Expect(condition.Status).To(Equal(v1.ConditionTrue))
+					}
+					Expect(condition.Message).To(Equal("there are multiple CRs deployed"))
+				}
+			}
 		})
 	})
 })
