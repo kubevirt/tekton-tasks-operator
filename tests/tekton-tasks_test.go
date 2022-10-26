@@ -21,7 +21,12 @@ var _ = Describe("Tekton-tasks", func() {
 		BeforeEach(func() {
 			tto := strategy.GetTTO()
 			tto.Spec.FeatureGates.DeployTektonTaskResources = false
-			apiClient.Update(ctx, tto)
+			createOrUpdateTekton(tto)
+		})
+
+		AfterEach(func() {
+			tto := getTekton()
+			deleteTekton(tto)
 		})
 
 		It("[test_id:TODO]operator should not create any cluster tasks", func() {
@@ -83,6 +88,11 @@ var _ = Describe("Tekton-tasks", func() {
 			tto.Spec.FeatureGates.DeployTektonTaskResources = true
 			createOrUpdateTekton(tto)
 			waitUntilDeployed()
+		})
+
+		AfterEach(func() {
+			tto := getTekton()
+			deleteTekton(tto)
 		})
 
 		It("[test_id:TODO]operator should create only allowed tekton-tasks with correct labels", func() {
@@ -180,15 +190,13 @@ var _ = Describe("Tekton-tasks", func() {
 
 	Context("resource deletion when CR is deleted", func() {
 		BeforeEach(func() {
-			tto := strategy.GetTTO()
-			apiClient.Delete(ctx, tto)
-		})
-
-		AfterEach(func() {
 			strategy.CreateTTOIfNeeded()
+			waitUntilDeployed()
 		})
 
 		It("[test_id:TODO]operator should delete tekton-tasks", func() {
+			tto := getTekton()
+			deleteTekton(tto)
 			liveTasks := &pipeline.ClusterTaskList{}
 			Eventually(func() bool {
 				err := apiClient.List(ctx, liveTasks,
@@ -202,6 +210,8 @@ var _ = Describe("Tekton-tasks", func() {
 		})
 
 		It("[test_id:TODO]operator should delete service accounts", func() {
+			tto := getTekton()
+			deleteTekton(tto)
 			liveSA := &v1.ServiceAccountList{}
 			Eventually(func() bool {
 				err := apiClient.List(ctx, liveSA,
@@ -215,6 +225,8 @@ var _ = Describe("Tekton-tasks", func() {
 		})
 
 		It("[test_id:TODO]operator should delete cluster role", func() {
+			tto := getTekton()
+			deleteTekton(tto)
 			liveCR := &rbac.ClusterRoleList{}
 			Eventually(func() bool {
 				err := apiClient.List(ctx, liveCR,
@@ -229,6 +241,8 @@ var _ = Describe("Tekton-tasks", func() {
 		})
 
 		It("[test_id:TODO]operator should delete role bindings", func() {
+			tto := getTekton()
+			deleteTekton(tto)
 			liveRB := &rbac.RoleBindingList{}
 			Eventually(func() bool {
 				err := apiClient.List(ctx, liveRB,
