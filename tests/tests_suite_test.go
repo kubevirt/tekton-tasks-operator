@@ -15,7 +15,9 @@ import (
 	pipeline "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	v1api "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	v1reporter "kubevirt.io/client-go/reporter"
 	lifecycleapi "kubevirt.io/controller-lifecycle-operator-sdk/pkg/sdk/api"
@@ -134,7 +136,11 @@ var _ = BeforeSuite(func() {
 })
 
 var _ = AfterSuite(func() {
-	deleteTestTekton()
+	tektonTasksCRList := &tekton.TektonTasksList{}
+	apiClient.List(ctx, tektonTasksCRList)
+	for _, tto := range tektonTasksCRList.Items {
+		deleteTekton(&tto)
+	}
 })
 
 func setupApiClient() {
@@ -172,10 +178,26 @@ func waitUntilDeployed() {
 	deploymentTimedOut = false
 }
 
-func deleteTestTekton() {
-	tto := strategy.GetTTO()
+func deleteTekton(tto *tekton.TektonTasks) {
+	apiClient.Delete(ctx, tto)
+	Eventually(func() v1api.StatusReason {
+		namespacedName := types.NamespacedName{
+			Namespace: tto.Namespace,
+			Name:      tto.Name,
+		}
+		foundTekton := &tekton.TektonTasks{}
+		err := apiClient.Get(ctx, namespacedName, foundTekton)
+		return errors.ReasonForError(err)
+	}, 60*time.Second, 5*time.Second).Should(Equal(v1api.StatusReasonNotFound), "it should not find CR")
+}
 
-	Expect(apiClient.Delete(ctx, tto)).To(Succeed())
+func (t *newTektonStrategy) createTekton(name string) *tekton.TektonTasks {
+	tekton := strategy.GetTTO()
+	tekton.Name = name
+	tekton.Spec.FeatureGates.DeployTektonTaskResources = true
+	createOrUpdateTekton(tekton)
+
+	return tekton
 }
 
 func createOrUpdateTekton(tek *tekton.TektonTasks) {

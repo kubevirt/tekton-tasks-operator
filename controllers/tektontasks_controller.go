@@ -129,6 +129,15 @@ func (r *tektonTasksReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		return ctrl.Result{}, nil
 	}
 
+	tektonTaskList, err := r.getCRList(ctx)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
+	if len(tektonTaskList.Items) > 1 {
+		return ctrl.Result{}, r.setStatusMultipleCRs(ctx, tektonTaskList)
+	}
+
 	if isPaused(instance) {
 		if instance.Status.Paused {
 			return ctrl.Result{}, nil
@@ -173,6 +182,49 @@ func (r *tektonTasksReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	}
 
 	return ctrl.Result{}, nil
+}
+
+func (r *tektonTasksReconciler) getCRList(ctx context.Context) (*tekton.TektonTasksList, error) {
+	tektonTasksCRList := &tekton.TektonTasksList{}
+
+	err := r.client.List(ctx, tektonTasksCRList)
+	if err != nil {
+		return nil, err
+	}
+
+	return tektonTasksCRList, nil
+}
+
+func (r *tektonTasksReconciler) setStatusMultipleCRs(ctx context.Context, tektonTasksList *tekton.TektonTasksList) error {
+	const errMsg = "there are multiple CRs deployed"
+	r.log.Error(nil, errMsg)
+
+	for _, tektonTask := range tektonTasksList.Items {
+		conditionsv1.SetStatusCondition(&tektonTask.Status.Conditions, conditionsv1.Condition{
+			Type:    conditionsv1.ConditionAvailable,
+			Status:  v1.ConditionFalse,
+			Reason:  "Available",
+			Message: errMsg,
+		})
+		conditionsv1.SetStatusCondition(&tektonTask.Status.Conditions, conditionsv1.Condition{
+			Type:    conditionsv1.ConditionProgressing,
+			Status:  v1.ConditionFalse,
+			Reason:  "Progressing",
+			Message: errMsg,
+		})
+		conditionsv1.SetStatusCondition(&tektonTask.Status.Conditions, conditionsv1.Condition{
+			Type:    conditionsv1.ConditionDegraded,
+			Status:  v1.ConditionTrue,
+			Reason:  "Degraded",
+			Message: errMsg,
+		})
+
+		err := r.client.Status().Update(ctx, &tektonTask)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (r *tektonTasksReconciler) reconcileOperands(tektonRequest *common.Request) ([]common.ReconcileResult, error) {
