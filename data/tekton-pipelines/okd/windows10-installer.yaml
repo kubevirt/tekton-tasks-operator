@@ -17,11 +17,13 @@ metadata:
   namespace: kubevirt-os-images
 roleRef:
   kind: ClusterRole
-  name: windows10-pipelines
+  name: modify-data-object-task
   apiGroup: rbac.authorization.k8s.io
 subjects:
   - kind: ServiceAccount
     name: modify-data-object-task
+  - kind: ServiceAccount
+    name: pipeline
 ---
 apiVersion: v1
 kind: ServiceAccount
