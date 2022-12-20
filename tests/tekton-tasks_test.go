@@ -269,7 +269,6 @@ var _ = Describe("Tekton-tasks", func() {
 				Expect(err).ToNot(HaveOccurred())
 				return len(ttos.Items) == 2
 			}, 60*time.Second, 2*time.Second).Should(BeTrue(), "there should be 2 CRs")
-			time.Sleep(2 * time.Second)
 		})
 
 		AfterEach(func() {
@@ -283,22 +282,27 @@ var _ = Describe("Tekton-tasks", func() {
 
 		It("check if correct status is set for TTO", func() {
 			tektonTasksCRList := &tekton.TektonTasksList{}
-			apiClient.List(ctx, tektonTasksCRList)
+			Eventually(func() bool {
+				apiClient.List(ctx, tektonTasksCRList)
 
-			for _, item := range tektonTasksCRList.Items {
-				for _, condition := range item.Status.Conditions {
-					if condition.Type == conditionsv1.ConditionAvailable {
-						Expect(condition.Status).To(Equal(v1.ConditionFalse))
+				for _, item := range tektonTasksCRList.Items {
+					for _, condition := range item.Status.Conditions {
+						if condition.Type == conditionsv1.ConditionAvailable && condition.Status == v1.ConditionTrue {
+							return false
+						}
+						if condition.Type == conditionsv1.ConditionProgressing && condition.Status == v1.ConditionTrue {
+							return false
+						}
+						if condition.Type == conditionsv1.ConditionDegraded && condition.Status == v1.ConditionFalse {
+							return false
+						}
+						if condition.Message != "there are multiple CRs deployed" {
+							return false
+						}
 					}
-					if condition.Type == conditionsv1.ConditionProgressing {
-						Expect(condition.Status).To(Equal(v1.ConditionFalse))
-					}
-					if condition.Type == conditionsv1.ConditionDegraded {
-						Expect(condition.Status).To(Equal(v1.ConditionTrue))
-					}
-					Expect(condition.Message).To(Equal("there are multiple CRs deployed"))
 				}
-			}
+				return true
+			}, 60*time.Second, 2*time.Second).Should(BeTrue(), "conditions should have correct type, status and message")
 		})
 	})
 })
