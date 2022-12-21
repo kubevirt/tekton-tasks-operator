@@ -48,6 +48,7 @@ rules:
       - create
       - update
       - patch
+      - delete
     apiGroups:
       - template.openshift.io
     resources:
