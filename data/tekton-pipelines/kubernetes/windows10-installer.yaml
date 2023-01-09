@@ -153,7 +153,7 @@ metadata:
 spec:
   params:
     - name: winImageDownloadURL
-      description: Download URL to Windows 10 installation ISO (English United States x64 version is needed).
+      description: Download URL to Windows 10 installation ISO (English United States x64 version is needed). You can follow https://www.microsoft.com/en-us/software-download/windows10ISO to get one.
       type: string
     - name: autounattendConfigMapName
       description: Name of the ConfigMap containing the sysprep configuration files (autounattend.xml, etc.).
