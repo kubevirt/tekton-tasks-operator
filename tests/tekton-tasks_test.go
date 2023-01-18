@@ -15,6 +15,8 @@ import (
 	pipeline "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	v1 "k8s.io/api/core/v1"
 	rbac "k8s.io/api/rbac/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -33,54 +35,106 @@ var _ = Describe("Tekton-tasks", func() {
 
 		It("[test_id:TODO]operator should not create any cluster tasks", func() {
 			liveTasks := &pipeline.ClusterTaskList{}
-			Eventually(func() bool {
-				err := apiClient.List(ctx, liveTasks,
-					client.MatchingLabels{
-						tektontasks.TektonTasksVersionLabel: operands.TektonTasksVersion,
-					},
-				)
-				Expect(err).ToNot(HaveOccurred())
-				return len(liveTasks.Items) == 0
-			}, tenSecondTimeout, time.Second).Should(BeTrue(), "tasks should not exists")
+
+			err := apiClient.List(ctx, liveTasks,
+				client.MatchingLabels{
+					common.AppKubernetesManagedByLabel: common.AppKubernetesManagedByValue,
+				},
+			)
+			Expect(err).ToNot(HaveOccurred())
+
+			//Nothing to check, end the test successfully
+			if len(liveTasks.Items) == 0 {
+				return
+			}
+
+			err = apiClient.Delete(ctx, &liveTasks.Items[0])
+			Expect(err).ToNot(HaveOccurred())
+
+			deletedTask := &pipeline.ClusterTask{}
+			Consistently(func() metav1.StatusReason {
+				err := apiClient.Get(ctx, client.ObjectKeyFromObject(&liveTasks.Items[0]), deletedTask)
+				Expect(err).To(HaveOccurred())
+				return errors.ReasonForError(err)
+			}, tenSecondTimeout, time.Second).Should(Equal(metav1.StatusReasonNotFound), "task should not exists")
 		})
 
 		It("[test_id:TODO]operator should not create any service accounts", func() {
 			liveSA := &v1.ServiceAccountList{}
-			Eventually(func() bool {
-				err := apiClient.List(ctx, liveSA,
-					client.MatchingLabels{
-						tektontasks.TektonTasksVersionLabel: operands.TektonTasksVersion,
-					},
-				)
-				Expect(err).ToNot(HaveOccurred())
-				return len(liveSA.Items) == 0
-			}, tenSecondTimeout, time.Second).Should(BeTrue(), "service accounts should not exists")
+
+			err := apiClient.List(ctx, liveSA,
+				client.MatchingLabels{
+					common.AppKubernetesManagedByLabel: common.AppKubernetesManagedByValue,
+				},
+			)
+			Expect(err).ToNot(HaveOccurred())
+
+			//Nothing to check, end the test successfully
+			if len(liveSA.Items) == 0 {
+				return
+			}
+
+			err = apiClient.Delete(ctx, &liveSA.Items[0])
+			Expect(err).ToNot(HaveOccurred())
+
+			deletedSA := &v1.ServiceAccount{}
+			Consistently(func() metav1.StatusReason {
+				err := apiClient.Get(ctx, client.ObjectKeyFromObject(&liveSA.Items[0]), deletedSA)
+				Expect(err).To(HaveOccurred())
+				return errors.ReasonForError(err)
+			}, tenSecondTimeout, time.Second).Should(Equal(metav1.StatusReasonNotFound), "SA should not exists")
 		})
 
 		It("[test_id:TODO]operator should not create any cluster role", func() {
 			liveCR := &rbac.ClusterRoleList{}
-			Eventually(func() bool {
-				err := apiClient.List(ctx, liveCR,
-					client.MatchingLabels{
-						tektontasks.TektonTasksVersionLabel: operands.TektonTasksVersion,
-					},
-				)
-				Expect(err).ToNot(HaveOccurred())
-				return len(liveCR.Items) == 0
-			}, tenSecondTimeout, time.Second).Should(BeTrue(), "cluster role should not exists")
+
+			err := apiClient.List(ctx, liveCR,
+				client.MatchingLabels{
+					common.AppKubernetesManagedByLabel: common.AppKubernetesManagedByValue,
+				},
+			)
+			Expect(err).ToNot(HaveOccurred())
+
+			//Nothing to check, end the test successfully
+			if len(liveCR.Items) == 0 {
+				return
+			}
+
+			err = apiClient.Delete(ctx, &liveCR.Items[0])
+			Expect(err).ToNot(HaveOccurred())
+
+			deletedCR := &rbac.ClusterRole{}
+			Consistently(func() metav1.StatusReason {
+				err := apiClient.Get(ctx, client.ObjectKeyFromObject(&liveCR.Items[0]), deletedCR)
+				Expect(err).To(HaveOccurred())
+				return errors.ReasonForError(err)
+			}, tenSecondTimeout, time.Second).Should(Equal(metav1.StatusReasonNotFound), "CR should not exists")
 		})
 
 		It("[test_id:TODO]operator should not create role bindings", func() {
 			liveRB := &rbac.RoleBindingList{}
-			Eventually(func() bool {
-				err := apiClient.List(ctx, liveRB,
-					client.MatchingLabels{
-						tektontasks.TektonTasksVersionLabel: operands.TektonTasksVersion,
-					},
-				)
-				Expect(err).ToNot(HaveOccurred())
-				return len(liveRB.Items) == 0
-			}, tenSecondTimeout, time.Second).Should(BeTrue(), "role bindings should not exists")
+
+			err := apiClient.List(ctx, liveRB,
+				client.MatchingLabels{
+					common.AppKubernetesManagedByLabel: common.AppKubernetesManagedByValue,
+				},
+			)
+			Expect(err).ToNot(HaveOccurred())
+
+			//Nothing to check, end the test successfully
+			if len(liveRB.Items) == 0 {
+				return
+			}
+
+			err = apiClient.Delete(ctx, &liveRB.Items[0])
+			Expect(err).ToNot(HaveOccurred())
+
+			deletedRB := &rbac.RoleBinding{}
+			Consistently(func() metav1.StatusReason {
+				err := apiClient.Get(ctx, client.ObjectKeyFromObject(&liveRB.Items[0]), deletedRB)
+				Expect(err).To(HaveOccurred())
+				return errors.ReasonForError(err)
+			}, tenSecondTimeout, time.Second).Should(Equal(metav1.StatusReasonNotFound), "RB should not exists")
 		})
 
 	})
