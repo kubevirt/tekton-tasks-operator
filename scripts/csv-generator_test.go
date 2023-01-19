@@ -30,6 +30,7 @@ var _ = Describe("csv generator", func() {
 		modifyDataObjectImage:  "testDataObjectImage",
 		copyTemplateImage:      "testCopyTemplateImage",
 		cleanupVMImage:         "testCleanupImage",
+		virtioImage:            "testVirtioImage",
 	}
 	envValues := []v1.EnvVar{
 		{Name: environment.OperatorVersionKey},
@@ -41,6 +42,7 @@ var _ = Describe("csv generator", func() {
 		{Name: environment.DiskVirtSysprepImageKey},
 		{Name: environment.ModifyVMTemplateImageKey},
 		{Name: environment.WaitForVMISTatusImageKey},
+		{Name: environment.VirtioImageKey},
 	}
 
 	csv := csvv1.ClusterServiceVersion{
@@ -108,6 +110,9 @@ var _ = Describe("csv generator", func() {
 					}
 					if envVariable.Name == environment.WaitForVMISTatusImageKey {
 						Expect(envVariable.Value).To(Equal(flags.waitForVMIStatusImage))
+					}
+					if envVariable.Name == environment.VirtioImageKey {
+						Expect(envVariable.Value).To(Equal(flags.virtioImage))
 					}
 				}
 				break
