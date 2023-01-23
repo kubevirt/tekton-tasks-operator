@@ -23,6 +23,7 @@ import (
 // +kubebuilder:rbac:groups=template.openshift.io,resources=templates,verbs=get;list;watch;create;patch;update
 // +kubebuilder:rbac:groups=template.openshift.io,resources=processedtemplates,verbs=create
 // +kubebuilder:rbac:groups=cdi.kubevirt.io,resources=datavolumes,verbs=*
+// +kubebuilder:rbac:groups=cdi.kubevirt.io,resources=datasources,verbs=get;create;list;watch
 // +kubebuilder:rbac:groups=kubevirt.io,resources=virtualmachines/finalizers,verbs=*
 // +kubebuilder:rbac:groups=*,resources=persistentvolumeclaims,verbs=*
 // +kubebuilder:rbac:groups=*,resources=pods,verbs=create
