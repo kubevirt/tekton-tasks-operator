@@ -126,23 +126,25 @@ data:
 apiVersion: tekton.dev/v1beta1
 kind: Pipeline
 metadata:
-  name: windows10-customize
+  name: windows-customize
+  annotations:
+    description: windows-customize pipeline provides functionality for windows VMs to e.g. install sql server, or install VS Code into windows VM. This pipeline can be reused for customizing Windows 10 and 11.
 spec:
   params:
     - name: sourceTemplateName
-      description: Name of the Template which is used to customize Windows 10 and create a golden Template. The default boot source of this template needs to be available.
+      description: Name of the Template which is used to customize Windows and create a golden Template. The default boot source of this template needs to be available.
       type: string
       default: windows10-desktop-large
     - name: sourceTemplateNamespace
-      description: Namespace of the Template which is used to customize Windows 10 and create a golden Template. The default boot source of this template needs to be available.
+      description: Namespace of the Template which is used to customize Windows and create a golden Template. The default boot source of this template needs to be available.
       type: string
       default: openshift
     - name: customizeConfigMapName
-      description: Name of the ConfigMap containing the customization and sysprep configuration files (unattend.xml, etc.).
+      description: Name of the ConfigMap containing the customization and sysprep configuration files (unattend.xml, etc.). For example windows10-sqlserver or windows11-vs-code. It is possible to provide customize ConfigMaps created by the user too.
       type: string
       default: windows10-sqlserver
     - name: customizeTemplateName
-      description: Name of the customize Template which is created. A VM created from this template is used to customize Windows 10.
+      description: Name of the customize Template which is created. A VM created from this template is used to customize Windows.
       type: string
       default: windows10-desktop-large-customize-sqlserver
     - name: allowReplaceCustomizationTemplate
@@ -178,8 +180,8 @@ spec:
           value: $(tasks.copy-template-customize.results.name)
         - name: templateAnnotations
           value:
-            - "openshift.io/display-name: Microsoft Windows 10 Customize VM"
-            - "description: Template for customizing Microsoft Windows 10."
+            - "openshift.io/display-name: Microsoft Windows Customize VM"
+            - "description: Template for customizing Microsoft Windows."
         - name: deleteDatavolumeTemplate
           value: "true"
         - name: datavolumeTemplates
@@ -249,7 +251,7 @@ spec:
             apiVersion: cdi.kubevirt.io/v1beta1
             kind: DataVolume
             metadata:
-              generateName: windows10-base-
+              generateName: windows-base-
               annotations:
                 cdi.kubevirt.io/storage.bind.immediate.requested: \"true\"
                 cdi.kubevirt.io/storage.deleteAfterCompletion: "false"
@@ -282,7 +284,7 @@ spec:
           value: $(params.allowReplaceGoldenTemplate)
       runAfter:
         - create-base-dv
-      timeout: 10m
+      timeout: 30m
       taskRef:
         kind: ClusterTask
         name: copy-template
@@ -292,8 +294,8 @@ spec:
           value: $(tasks.copy-template-golden.results.name)
         - name: templateAnnotations
           value:
-            - "openshift.io/display-name: Microsoft Windows 10 Customized VM Golden"
-            - "description: Template for creating customized Microsoft Windows 10 VMs."
+            - "openshift.io/display-name: Microsoft Windows Customized VM Golden"
+            - "description: Template for creating customized Microsoft Windows VMs."
         - name: deleteDatavolumeTemplate
           value: "true"
         - name: datavolumeTemplates

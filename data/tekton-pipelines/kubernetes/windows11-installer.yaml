@@ -1,34 +1,7 @@
-apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
-metadata:
-  name: windows10-pipelines
-roleRef:
-  kind: ClusterRole
-  name: windows10-pipelines
-  apiGroup: rbac.authorization.k8s.io
-subjects:
-  - kind: ServiceAccount
-    name: pipeline
----
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: pipeline
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  name: windows10-pipelines
-rules:
-- apiGroups: ["kubevirt.io"]
-  resources: ["virtualmachines/finalizers"]
-  verbs: ["*"]
-  
----
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: windows10-autounattend
+  name: windows11-autounattend
 data:
   autounattend.xml: |
     <?xml version="1.0" encoding="utf-8"?>
@@ -46,7 +19,7 @@ data:
         <component name="Microsoft-Windows-PnpCustomizationsWinPE" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS">
           <DriverPaths>
             <PathAndCredentials wcm:action="add" wcm:keyValue="1">
-              <Path>E:\viostor\w10\amd64</Path>
+              <Path>E:\viostor\w11\amd64</Path>
             </PathAndCredentials>
           </DriverPaths>
         </component>
@@ -54,22 +27,55 @@ data:
           <DiskConfiguration>
             <WillShowUI>Never</WillShowUI>
             <Disk wcm:action="add">
+              <!-- https://foxpa.ws/win-10-11-unattended -->
+              <!-- https://learn.microsoft.com/en-us/windows-hardware/manufacture/desktop/configure-uefigpt-based-hard-drive-partitions?view=windows-11 -->
               <CreatePartitions>
-                <!-- Windows partition -->
-                <CreatePartition wcm:action="add">
-                  <Order>1</Order>
-                  <Type>Primary</Type>
-                  <Extend>true</Extend>
-                </CreatePartition>
+                  <CreatePartition wcm:action="add">
+                      <Order>1</Order>
+                      <Type>Primary</Type>
+                      <Size>300</Size>
+                  </CreatePartition>
+                  <CreatePartition wcm:action="add">
+                      <Order>2</Order>
+                      <Type>EFI</Type>
+                      <Size>100</Size>
+                  </CreatePartition>
+                  <CreatePartition wcm:action="add">
+                      <Order>3</Order>
+                      <Type>MSR</Type>
+                      <Size>128</Size>
+                  </CreatePartition>
+                  <CreatePartition wcm:action="add">
+                      <Order>4</Order>
+                      <Type>Primary</Type>
+                      <Extend>true</Extend>
+                  </CreatePartition>
               </CreatePartitions>
               <ModifyPartitions>
-                <!-- Windows partition -->
                 <ModifyPartition wcm:action="add">
-                  <Order>1</Order>
-                  <PartitionID>1</PartitionID>
-                  <Label>OS</Label>
-                  <Format>NTFS</Format>
-                  <Letter>C</Letter>
+                    <Order>1</Order>
+                    <PartitionID>1</PartitionID>
+                    <Label>WINRE</Label>
+                    <Format>NTFS</Format>
+                    <!-- https://learn.microsoft.com/en-us/windows-hardware/customize/desktop/unattend/microsoft-windows-setup-diskconfiguration-disk-modifypartitions-modifypartition-typeid -->
+                    <TypeID>DE94BBA4-06D1-4D40-A16A-BFD50179D6AC</TypeID>
+                </ModifyPartition>
+                <ModifyPartition wcm:action="add">
+                    <Order>2</Order>
+                    <PartitionID>2</PartitionID>
+                    <Label>EFI</Label>
+                    <Format>FAT32</Format>
+                </ModifyPartition>
+                <ModifyPartition wcm:action="add">
+                    <Order>3</Order>
+                    <PartitionID>3</PartitionID>
+                </ModifyPartition>
+                <ModifyPartition wcm:action="add">
+                    <Order>4</Order>
+                    <PartitionID>4</PartitionID>
+                    <Label>Windows</Label>
+                    <Letter>C</Letter>
+                    <Format>NTFS</Format>
                 </ModifyPartition>
               </ModifyPartitions>
               <DiskID>0</DiskID>
@@ -81,12 +87,12 @@ data:
               <InstallFrom>
                 <MetaData wcm:action="add">
                   <Key>/Image/Description</Key>
-                  <Value>Windows 10 Pro</Value>
+                  <Value>Windows 11 Pro</Value>
                 </MetaData>
               </InstallFrom>
               <InstallTo>
                 <DiskID>0</DiskID>
-                <PartitionID>1</PartitionID>
+                <PartitionID>4</PartitionID>
               </InstallTo>
             </OSImage>
           </ImageInstall>
@@ -149,16 +155,16 @@ data:
 apiVersion: tekton.dev/v1beta1
 kind: Pipeline
 metadata:
-  name: windows10-installer
+  name: windows11-installer
 spec:
   params:
     - name: winImageDownloadURL
-      description: Download URL to Windows 10 installation ISO (English United States x64 version is needed). You can follow https://www.microsoft.com/en-us/software-download/windows10ISO to get one.
+      description: Download URL to Windows 11 installation ISO (English United States x64 version is needed). You can follow https://www.microsoft.com/en-us/software-download/windows10ISO to get one.
       type: string
     - name: autounattendConfigMapName
       description: Name of the ConfigMap containing the sysprep configuration files (autounattend.xml, etc.).
       type: string
-      default: windows10-autounattend
+      default: windows11-autounattend
     - name: virtioContainerDiskName
       description: Reference to the containerdisk containing the virtio-win drivers ISO.
       type: string
@@ -171,12 +177,12 @@ spec:
             apiVersion: cdi.kubevirt.io/v1beta1
             kind: DataVolume
             metadata:
-              generateName: windows10-source-
+              generateName: windows11-source-
             spec:
               storage:
                 resources:
                   requests:
-                    storage: 7Gi
+                    storage: 9Gi
               source:
                 http:
                   url: $(params.winImageDownloadURL)
@@ -184,6 +190,15 @@ spec:
       taskRef:
         kind: ClusterTask
         name: modify-data-object
+    - name: modify-windows-iso-file
+      params:
+        - name: pvcName
+          value: $(tasks.create-source-dv.results.name)
+      runAfter:
+        - create-source-dv
+      taskRef:
+        kind: ClusterTask
+        name: modify-windows-iso-file
     - name: create-base-dv
       params:
         - name: manifest
@@ -191,7 +206,7 @@ spec:
             apiVersion: cdi.kubevirt.io/v1beta1
             kind: DataVolume
             metadata:
-              generateName: windows10-base-
+              generateName: windows11-base-
             spec:
               storage:
                 resources:
@@ -210,92 +225,97 @@ spec:
             apiVersion: kubevirt.io/v1
             kind: VirtualMachine
             metadata:
-              generateName: windows10-installer-
+              generateName: windows11-installer-
               labels:
-                app: windows10-installer
+                app: windows11-installer
             spec:
               running: false
               template:
                 metadata:
                   annotations:
-                    vm.kubevirt.io/os: windows10
+                    vm.kubevirt.io/os: windows11
                   labels:
-                    kubevirt.io/domain: windows10-installer
-                spec:
-                  domain:
-                    clock:
-                      utc: {}
-                      timer:
-                        hpet:
-                          present: false
-                        pit:
-                          tickPolicy: delay
-                        rtc:
-                          tickPolicy: catchup
-                        hyperv: {}
-                    cpu:
-                      sockets: 2
-                      cores: 1
-                      threads: 1
-                    resources:
-                      requests:
-                        memory: 8Gi
-                    features:
-                      acpi: {}
-                      apic: {}
-                      hyperv:
-                        relaxed: {}
-                        vapic: {}
-                        vpindex: {}
-                        spinlocks:
-                          spinlocks: 8191
-                        synic: {}
-                        synictimer:
-                          direct: {}
-                        tlbflush: {}
-                        frequencies: {}
-                        reenlightenment: {}
-                        ipi: {}
-                        runtime: {}
-                        reset: {}
-                    devices:
-                      disks:
-                        - name: installcdrom
-                          cdrom:
-                            bus: sata
-                          bootOrder: 1
-                        - name: rootdisk
-                          disk:
-                            bus: virtio
-                          bootOrder: 2
-                        - name: virtiocontainerdisk
-                          cdrom:
-                            bus: sata
-                        - name: sysprep
-                          cdrom:
-                            bus: sata
-                      interfaces:
-                        - masquerade: {}
-                          model: e1000e
-                          name: default
-                      inputs:
-                        - type: tablet
-                          bus: usb
-                          name: tablet
-                  terminationGracePeriodSeconds: 3600
-                  volumes:
+                    kubevirt.io/domain: windows11-installer
+              domain:
+                clock:
+                  utc: {}
+                  timer:
+                    hpet:
+                      present: false
+                    pit:
+                      tickPolicy: delay
+                    rtc:
+                      tickPolicy: catchup
+                    hyperv: {}
+                cpu:
+                  sockets: 2
+                  cores: 2
+                  threads: 1
+                resources:
+                  requests:
+                    memory: 8Gi
+                features:
+                  acpi: {}
+                  apic: {}
+                  smm: {}
+                  hyperv:
+                    relaxed: {}
+                    vapic: {}
+                    vpindex: {}
+                    spinlocks:
+                      spinlocks: 8191
+                    synic: {}
+                    synictimer:
+                      direct: {}
+                    tlbflush: {}
+                    frequencies: {}
+                    reenlightenment: {}
+                    ipi: {}
+                    runtime: {}
+                    reset: {}
+                firmware:
+                  bootloader:
+                    efi:
+                      secureBoot: true
+                devices:
+                  disks:
                     - name: installcdrom
+                      cdrom:
+                        bus: sata
+                      bootOrder: 2
                     - name: rootdisk
+                      disk:
+                        bus: virtio
+                      bootOrder: 1
                     - name: virtiocontainerdisk
-                      containerDisk:
-                        image: $(params.virtioContainerDiskName)
+                      cdrom:
+                        bus: sata
                     - name: sysprep
-                      sysprep:
-                        configMap:
-                          name: $(params.autounattendConfigMapName)
-                  networks:
-                    - name: default
-                      pod: {}
+                      cdrom:
+                        bus: sata
+                  interfaces:
+                    - masquerade: {}
+                      model: e1000e
+                      name: default
+                  inputs:
+                    - type: tablet
+                      bus: usb
+                      name: tablet
+                  tpm: {}
+              terminationGracePeriodSeconds: 0
+              volumes:
+                - name: installcdrom
+                - name: rootdisk
+                - name: virtiocontainerdisk
+                  containerDisk:
+                    image: $(params.virtioContainerDiskName)
+                - name: sysprep
+                  sysprep:
+                    configMap:
+                      name: $(params.autounattendConfigMapName)
+              networks:
+                - name: default
+                  pod: {}
         - name: ownDataVolumes
           value:
             - "installcdrom: $(tasks.create-source-dv.results.name)"
@@ -307,7 +327,7 @@ spec:
         - name: startVM
           value: "true"
       runAfter:
-        - create-source-dv
+        - modify-windows-iso-file
         - create-base-dv
       timeout: 10m
       taskRef:
@@ -345,3 +365,4 @@ spec:
     - name: baseDvNamespace
       description: Namespace of the created base DataVolume
       value: $(tasks.create-base-dv.results.namespace)
+

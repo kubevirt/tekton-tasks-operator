@@ -4,7 +4,8 @@ import (
 	"bytes"
 	"context"
 	"io"
-	"io/ioutil"
+	"os"
+
 	"path/filepath"
 
 	"github.com/kubevirt/tekton-tasks-operator/pkg/operands"
@@ -117,7 +118,7 @@ func runningOnOpenshift(cl client.Reader, ctx context.Context) (bool, error) {
 }
 
 func readFile(fileName string) ([][]byte, error) {
-	file, err := ioutil.ReadFile(fileName)
+	file, err := os.ReadFile(fileName)
 	if err != nil {
 		return nil, err
 	}
@@ -126,7 +127,7 @@ func readFile(fileName string) ([][]byte, error) {
 }
 
 func readFolder(folderPath string) ([][]byte, error) {
-	files, err := ioutil.ReadDir(folderPath)
+	files, err := os.ReadDir(folderPath)
 	if err != nil {
 		return nil, err
 	}
@@ -136,7 +137,7 @@ func readFolder(folderPath string) ([][]byte, error) {
 			continue
 		}
 
-		f, err := ioutil.ReadFile(filepath.Join(folderPath, file.Name()))
+		f, err := os.ReadFile(filepath.Join(folderPath, file.Name()))
 		if err != nil {
 			return nil, err
 		}
@@ -168,26 +169,44 @@ func decodeObjectsFromFiles(files [][]byte) (*Bundle, error) {
 				case clusterTasksString:
 					clusterTask := pipeline.ClusterTask{}
 					err = getObject(obj, &clusterTask)
+					if err != nil {
+						return nil, err
+					}
 					bundle.ClusterTasks = append(bundle.ClusterTasks, clusterTask)
 				case pipelineKindString:
 					p := pipeline.Pipeline{}
 					err = getObject(obj, &p)
+					if err != nil {
+						return nil, err
+					}
 					bundle.Pipelines = append(bundle.Pipelines, p)
 				case serviceAccountKind:
 					sa := v1.ServiceAccount{}
 					err = getObject(obj, &sa)
+					if err != nil {
+						return nil, err
+					}
 					bundle.ServiceAccounts = append(bundle.ServiceAccounts, sa)
 				case roleBindingKind:
 					rb := rbac.RoleBinding{}
 					err = getObject(obj, &rb)
+					if err != nil {
+						return nil, err
+					}
 					bundle.RoleBindings = append(bundle.RoleBindings, rb)
 				case clusterRoleKind:
 					cr := rbac.ClusterRole{}
 					err = getObject(obj, &cr)
+					if err != nil {
+						return nil, err
+					}
 					bundle.ClusterRoles = append(bundle.ClusterRoles, cr)
 				case configMapKind:
 					cm := v1.ConfigMap{}
 					err = getObject(obj, &cm)
+					if err != nil {
+						return nil, err
+					}
 					bundle.ConfigMaps = append(bundle.ConfigMaps, cm)
 				default:
 					continue

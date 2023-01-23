@@ -126,7 +126,9 @@ data:
 apiVersion: tekton.dev/v1beta1
 kind: Pipeline
 metadata:
-  name: windows10-customize
+  name: windows-customize
+  annotations:
+    description: windows-customize pipeline provides functionality for windows VMs to e.g. install sql server, or install VS Code into windows VM. This pipeline can be reused for customizing Windows 10 and 11.
 spec:
   params:
     - name: sourceDataVolumeName
@@ -136,7 +138,7 @@ spec:
       description: Namespace of the DataVolume which is used to customize Windows 10 and create a new base DataVolume.
       type: string
     - name: customizeConfigMapName
-      description: Name of the ConfigMap containing the customization and sysprep configuration files (unattend.xml, etc.).
+      description: Name of the ConfigMap containing the customization and sysprep configuration files (unattend.xml, etc.). For example windows10-sqlserver or windows11-vs-code. It is possible to provide customize ConfigMaps created by the user too.
       type: string
       default: windows10-sqlserver
   tasks:
@@ -147,14 +149,14 @@ spec:
             apiVersion: cdi.kubevirt.io/v1beta1
             kind: DataVolume
             metadata:
-              generateName: windows10-base-
+              generateName: windows-base-
             spec:
               storage: {}
               source:
                 pvc:
                   name: $(params.sourceDataVolumeName)
                   namespace: $(params.sourceDataVolumeNamespace)
-      timeout: 10m
+      timeout: 1h
       taskRef:
         kind: ClusterTask
         name: modify-data-object
@@ -165,17 +167,17 @@ spec:
             apiVersion: kubevirt.io/v1
             kind: VirtualMachine
             metadata:
-              generateName: windows10-customize-
+              generateName: windows-customize-
               labels:
-                app: windows10-customize
+                app: windows-customize
             spec:
               running: false
               template:
                 metadata:
                   annotations:
-                    vm.kubevirt.io/os: windows10
+                    vm.kubevirt.io/os: windows
                   labels:
-                    kubevirt.io/domain: windows10-customize
+                    kubevirt.io/domain: windows-customize
                 spec:
                   domain:
                     clock:

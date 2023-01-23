@@ -63,8 +63,8 @@ function wait_for_pipelinerun() {
 # Disable smart cloning - it does not work properly on azure clusters, when this issue gets fixed we can enable it again - https://issues.redhat.com/browse/CNV-21844
 oc patch cdi cdi --type merge -p '{"spec":{"cloneStrategyOverride":"copy"}}'
 
-echo "Creating datavolume with win10 iso"
-oc apply -f "scripts/test-files/win10-dv.yaml"
+echo "Creating datavolume with windows iso"
+oc apply -f "scripts/test-files/${TARGET}-dv.yaml"
 
 echo "Waiting for pvc to be created"
 wait_until_exists "pvc -n kubevirt iso-dv -o jsonpath='{.metadata.annotations.cdi\.kubevirt\.io/storage\.pod\.phase}'"
@@ -86,22 +86,22 @@ make deploy
 
 # Deploy tekton task sample
 oc apply -f "config/samples/tektontasks_v1alpha1_tektontasks.yaml"
-wait_until_exists "pipeline windows10-installer -n kubevirt" wait_until_exists "pipeline windows10-customize -n kubevirt"
+wait_until_exists "pipeline ${TARGET}-installer -n kubevirt" wait_until_exists "pipeline windows-customize -n kubevirt"
 
-# Run windows10-installer pipeline
-echo "Running windows10-installer pipeline"
-oc create -n kubevirt -f "scripts/test-files/windows10-installer-pipelinerun.yaml"
-wait_until_exists "pipelinerun -n kubevirt -l pipelinerun=windows10-installer-run"
-
-# Wait for pipeline to finish
-echo "Waiting for pipeline to finish"
-wait_for_pipelinerun "windows10-installer"
-
-# Run windows10-customize pipeline
-echo "Running windows10-customize pipeline"
-oc create -n kubevirt -f "scripts/test-files/windows10-customize-pipelinerun.yaml"
-wait_until_exists "pipelinerun -n kubevirt -l pipelinerun=windows10-customize-run"
+# Run windows10/11-installer pipeline
+echo "Running ${TARGET}-installer pipeline"
+oc create -n kubevirt -f "scripts/test-files/${TARGET}-installer-pipelinerun.yaml"
+wait_until_exists "pipelinerun -n kubevirt -l pipelinerun=${TARGET}-installer-run"
 
 # Wait for pipeline to finish
 echo "Waiting for pipeline to finish"
-wait_for_pipelinerun "windows10-customize"
+wait_for_pipelinerun "${TARGET}-installer"
+
+# Run windows-customize pipeline
+echo "Running windows-customize pipeline"
+oc create -n kubevirt -f "scripts/test-files/${TARGET}-customize-pipelinerun.yaml"
+wait_until_exists "pipelinerun -n kubevirt -l pipelinerun=${TARGET}-customize-run"
+
+# Wait for pipeline to finish
+echo "Waiting for pipeline to finish"
+wait_for_pipelinerun "${TARGET}-customize"
