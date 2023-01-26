@@ -44,6 +44,7 @@ const (
 	createVMFromManifestTaskName = "create-vm-from-manifest"
 	generateSSHKeysTaskName      = "generate-ssh-keys"
 	executeInVMTaskName          = "execute-in-vm"
+	modifyWindowsVMIsoFileName   = " modify-windows-iso-file"
 )
 
 var requiredCRDs = []string{"tasks.tekton.dev"}
@@ -60,6 +61,7 @@ var AllowedTasks = map[string]func() string{
 	waitForVMITaskName:           environment.GetWaitForVMIStatusImage,
 	generateSSHKeysTaskName:      environment.GetSSHKeysStatusImage,
 	executeInVMTaskName:          environment.GetCleanupVMImage,
+	modifyWindowsVMIsoFileName:   environment.GetCleanupVMImage,
 }
 
 func init() {
@@ -195,7 +197,18 @@ func reconcileTektonTasksFuncs(tasks []pipeline.ClusterTask) []common.ReconcileF
 	for i := range tasks {
 		task := &tasks[i]
 		funcs = append(funcs, func(request *common.Request) (common.ReconcileResult, error) {
-			task.Spec.Steps[0].Image = AllowedTasks[task.Name]()
+			if task.Name == modifyWindowsVMIsoFileName {
+				for i, step := range task.Spec.Steps {
+					if step.Name == "create-iso-file" {
+						task.Spec.Steps[i].Image = AllowedTasks[modifyDataObjectTaskName]()
+					}
+					if step.Name == "convert-iso-file" || step.Name == "modify-iso-file" {
+						task.Spec.Steps[i].Image = AllowedTasks[diskVirtCustomizeTaskName]()
+					}
+				}
+			} else {
+				task.Spec.Steps[0].Image = AllowedTasks[task.Name]()
+			}
 			task.Labels[TektonTasksVersionLabel] = operands.TektonTasksVersion
 			return common.CreateOrUpdate(request).
 				ClusterResource(task).
