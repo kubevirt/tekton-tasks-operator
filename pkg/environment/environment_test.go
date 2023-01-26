@@ -119,6 +119,18 @@ var _ = Describe("environments", func() {
 		Expect(res).To(Equal(DefaultWaitForVMIStatusIMG), "WAIT_FOR_VMI_STATUS_IMG should equal")
 	})
 
+	It("should return correct value for VIRTIO_IMG when variable is set", func() {
+		os.Setenv(VirtioImageKey, testURL)
+		res := GetVirtioImage()
+		Expect(res).To(Equal(testURL), "VIRTIO_IMG should equal")
+		os.Unsetenv(VirtioImageKey)
+	})
+
+	It("should return correct value for VIRTIO_IMG when variable is not set", func() {
+		res := GetVirtioImage()
+		Expect(res).To(Equal(DefaultVirtioIMG), "VIRTIO_IMG should equal")
+	})
+
 	It("should return correct value for GENERATE_SSH_KEYS_IMG when variable is set", func() {
 		os.Setenv(GenerateSSHKeysImageKey, testURL)
 		res := GetSSHKeysStatusImage()

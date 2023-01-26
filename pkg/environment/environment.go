@@ -32,6 +32,7 @@ const (
 	DiskVirtSysprepImageKey   = "DISK_VIRT_SYSPREP_IMG"
 	ModifyVMTemplateImageKey  = "MODIFY_VM_TEMPLATE_IMG"
 	WaitForVMISTatusImageKey  = "WAIT_FOR_VMI_STATUS_IMG"
+	VirtioImageKey            = "VIRTIO_IMG"
 	GenerateSSHKeysImageKey   = "GENERATE_SSH_KEYS_IMG"
 
 	DefaultWaitForVMIStatusIMG  = "quay.io/kubevirt/tekton-task-wait-for-vmi-status:" + operands.TektonTasksVersion
@@ -43,6 +44,7 @@ const (
 	DeafultCopyTemplateIMG      = "quay.io/kubevirt/tekton-task-copy-template:" + operands.TektonTasksVersion
 	DeafultCleanupVMIMG         = "quay.io/kubevirt/tekton-task-execute-in-vm:" + operands.TektonTasksVersion
 	GenerateSSHKeysIMG          = "quay.io/kubevirt/tekton-task-generate-ssh-keys:" + operands.TektonTasksVersion
+	DefaultVirtioIMG            = "quay.io/kubevirt/virtio-container-disk:v0.58.0"
 
 	defaultOperatorVersion = "devel"
 )
@@ -90,6 +92,11 @@ func GetCopyTemplateImage() string {
 // GetCleanupVMImage returns cleanup-vm task image url
 func GetCleanupVMImage() string {
 	return EnvOrDefault(CleanupVMImageKey, DeafultCleanupVMIMG)
+}
+
+// GetVirtioImage returns virtio image url
+func GetVirtioImage() string {
+	return EnvOrDefault(VirtioImageKey, DefaultVirtioIMG)
 }
 
 // GetModifyVMTemplateImage returns modify-vm-template task image url

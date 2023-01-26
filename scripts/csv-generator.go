@@ -55,6 +55,7 @@ type generatorFlags struct {
 	copyTemplateImage      string
 	cleanupVMImage         string
 	generateSSHKeys        string
+	virtioImage            string
 }
 
 var (
@@ -93,6 +94,7 @@ func init() {
 	rootCmd.Flags().StringVar(&f.copyTemplateImage, "copy-template-image", "", "Link to copy-template-image task image")
 	rootCmd.Flags().StringVar(&f.generateSSHKeys, "generate-ssh-keys", "", "Link to generate-ssh-keys task image")
 	rootCmd.Flags().StringVar(&f.cleanupVMImage, "cleanup-vm-image", "", "Link to cleanup-vm-image task image")
+	rootCmd.Flags().StringVar(&f.virtioImage, "virtio-image", "", "Link to virtio image")
 
 	rootCmd.Flags().BoolVar(&f.removeCerts, "webhook-remove-certs", false, "Remove the webhook certificate volume and mount")
 	rootCmd.Flags().BoolVar(&f.dumpCRDs, "dump-crds", false, "Dump crds to stdout")
@@ -259,6 +261,14 @@ func buildRelatedImages(flags generatorFlags) ([]interface{}, error) {
 		relatedImages = append(relatedImages, relatedImage)
 	}
 
+	if flags.virtioImage != "" {
+		relatedImage, err := buildRelatedImage(flags.virtioImage, "virtio-container")
+		if err != nil {
+			return nil, err
+		}
+		relatedImages = append(relatedImages, relatedImage)
+	}
+
 	return relatedImages, nil
 }
 
@@ -331,6 +341,10 @@ func updateContainerEnvVars(flags generatorFlags, container v1.Container) []v1.E
 		case environment.GenerateSSHKeysImageKey:
 			if flags.generateSSHKeys != "" {
 				envVariable.Value = flags.generateSSHKeys
+			}
+		case environment.VirtioImageKey:
+			if flags.virtioImage != "" {
+				envVariable.Value = flags.virtioImage
 			}
 		}
 

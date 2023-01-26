@@ -3,11 +3,13 @@ package tekton_pipelines
 import (
 	"fmt"
 	"regexp"
+	"strings"
 
 	"github.com/kubevirt/tekton-tasks-operator/pkg/common"
 	"github.com/kubevirt/tekton-tasks-operator/pkg/environment"
 	"github.com/kubevirt/tekton-tasks-operator/pkg/operands"
 	tektonbundle "github.com/kubevirt/tekton-tasks-operator/pkg/tekton-bundle"
+	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	pipeline "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	v1 "k8s.io/api/core/v1"
 	rbac "k8s.io/api/rbac/v1"
@@ -143,6 +145,14 @@ func reconcileTektonPipelinesFuncs(pipelines []pipeline.Pipeline) []common.Recon
 					newPipeline := newRes.(*pipeline.Pipeline)
 					foundPipeline := foundRes.(*pipeline.Pipeline)
 					foundPipeline.Spec = newPipeline.Spec
+					for i, param := range foundPipeline.Spec.Params {
+						if strings.HasPrefix(param.Name, "virtioContainer") {
+							foundPipeline.Spec.Params[i].Default = &v1beta1.ArrayOrString{
+								Type:      v1beta1.ParamTypeString,
+								StringVal: environment.GetVirtioImage(),
+							}
+						}
+					}
 				}).
 				Reconcile()
 		})
