@@ -3,6 +3,13 @@
 cp -L $KUBECONFIG /tmp/kubeconfig && export KUBECONFIG=/tmp/kubeconfig
 export IMG=${CI_OPERATOR_IMG}
 
+# switch to faster storage class for example pipelines tests (slower storage class is causing timeouts due 
+# to not able to copy whole windows disk)
+if ! oc get storageclass | grep -q 'ssd-csi (default)' > /dev/null; then
+  oc annotate storageclass ssd-csi storageclass.kubernetes.io/is-default-class=true --overwrite
+  oc annotate storageclass standard-csi storageclass.kubernetes.io/is-default-class- --overwrite
+fi
+
 # Deploy resources
 echo "Deploying resources"
 ./scripts/deploy-resources.sh
