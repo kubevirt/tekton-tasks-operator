@@ -28,7 +28,7 @@ jobs:
           cd tekton-tasks-operator || exit
           git remote add upstream https://github.com/kubevirt/tekton-tasks-operator
           git fetch upstream
-          git reset --hard upstream/master
+          git reset --hard upstream/main
 
           # Fetch kubevirt version
           KUBEVIRT_VERSION=$(curl -s https://api.github.com/repos/kubevirt/kubevirt/releases | \
@@ -48,7 +48,7 @@ jobs:
 
             # Create a new PR in the tekton-tasks-operator repo
             gh pr create --repo kubevirt/tekton-tasks-operator \
-              --base master \
+              --base main \
               --head "${GITHUB_FORK_USER}:${PATCH_BRANCH}" \
               --title "Update virtio image version to ${KUBEVIRT_VERSION}" \
               --body "$(cat <<- EOF
