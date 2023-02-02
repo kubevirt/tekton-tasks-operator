@@ -44,7 +44,7 @@ const (
 	createVMFromManifestTaskName = "create-vm-from-manifest"
 	generateSSHKeysTaskName      = "generate-ssh-keys"
 	executeInVMTaskName          = "execute-in-vm"
-	modifyWindowsVMIsoFileName   = " modify-windows-iso-file"
+	modifyWindowsVMIsoFileName   = "modify-windows-iso-file"
 )
 
 var requiredCRDs = []string{"tasks.tekton.dev"}

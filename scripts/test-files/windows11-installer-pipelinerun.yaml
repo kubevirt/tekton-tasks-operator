@@ -1,21 +1,19 @@
 apiVersion: tekton.dev/v1beta1
 kind: PipelineRun
 metadata:
-  generateName: windows10-customize-run-
-  labels: 
-    pipelinerun: windows10-customize-run
+  generateName: windows11-installer-run-
+  labels:
+    pipelinerun: windows11-installer-run
 spec:
   params:
-    - name: allowReplaceGoldenTemplate
-      value: true
-    - name: allowReplaceCustomizationTemplate
-      value: true
+  - name: winImageDownloadURL
+    value: http://http-server/disk.img
   pipelineRef:
-    name: windows-customize
+    name: windows11-installer
   taskRunSpecs:
-    - pipelineTaskName: copy-template-customize
+    - pipelineTaskName: copy-template
       taskServiceAccountName: copy-template-task
-    - pipelineTaskName: modify-vm-template-customize
+    - pipelineTaskName: modify-vm-template
       taskServiceAccountName: modify-vm-template-task
     - pipelineTaskName: create-vm-from-template
       taskServiceAccountName: create-vm-from-template-task
@@ -25,8 +23,9 @@ spec:
       taskServiceAccountName: modify-data-object-task
     - pipelineTaskName: cleanup-vm
       taskServiceAccountName: cleanup-vm-task
-    - pipelineTaskName: copy-template-golden
-      taskServiceAccountName: copy-template-task
-    - pipelineTaskName: modify-vm-template-golden
-      taskServiceAccountName: modify-vm-template-task
-status: {}
+    - pipelineTaskName: "modify-windows-iso-file"
+      taskPodTemplate:
+        securityContext:
+          runAsUser: 1001
+          runAsGroup: 1001
+          fsGroup: 1001     
