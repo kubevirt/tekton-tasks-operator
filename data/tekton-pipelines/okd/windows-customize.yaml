@@ -311,7 +311,7 @@ spec:
                   "storage": {
                     "resources": {
                       "requests": {
-                        "storage": "60Gi"
+                        "storage": "20Gi"
                       }
                     }
                   },

@@ -155,20 +155,20 @@ data:
 apiVersion: tekton.dev/v1beta1
 kind: Pipeline
 metadata:
-  name: windows11-installer
+  name: windows-efi-installer
 spec:
   params:
     - name: winImageDownloadURL
-      description: Download URL to Windows 11 installation ISO (English United States x64 version is needed). You can follow https://www.microsoft.com/en-us/software-download/windows10ISO to get one.
+      description: Download URL to Windows 11 or server 2022 installation ISO (English United States x64 version is needed). You can follow https://www.microsoft.com/en-us/software-download/windows11 or https://www.microsoft.com/en-us/evalcenter/evaluate-windows-server-2022 to get one.
       type: string
     - name: autounattendConfigMapName
-      description: Name of the ConfigMap containing the sysprep configuration files (autounattend.xml, etc.).
+      description: Name of the ConfigMap containing the sysprep configuration files (autounattend.xml, etc.). For example windows11-autounattend or windows2022-autounattend. It is possible to provide customize ConfigMaps created by the user too.
       type: string
       default: windows11-autounattend
     - name: virtioContainerDiskName
       description: Reference to the containerdisk containing the virtio-win drivers ISO.
       type: string
-      default: quay.io/kubevirt/virtio-container-disk:latest
+      default: quay.io/kubevirt/virtio-container-disk:v0.59.0-rc.0
   tasks:
     - name: create-source-dv
       params:
