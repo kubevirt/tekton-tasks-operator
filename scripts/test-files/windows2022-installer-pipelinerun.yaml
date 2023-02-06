@@ -1,9 +1,9 @@
 apiVersion: tekton.dev/v1beta1
 kind: PipelineRun
 metadata:
-  generateName: windows11-installer-run-
+  generateName: windows2k22-installer-run-
   labels:
-    pipelinerun: windows11-installer-run
+    pipelinerun: windows2k22--installer-run
 spec:
   params:
   - name: winImageDownloadURL
