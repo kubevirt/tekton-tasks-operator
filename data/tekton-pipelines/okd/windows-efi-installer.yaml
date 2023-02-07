@@ -216,7 +216,7 @@ spec:
       name: baseDvNamespace
       type: string
     - default: win11
-      description: Name of  Windows 11 ISO datavolume
+      description: Name of Windows ISO datavolume
       name: isoDVName
       type: string
     - default: "false"
