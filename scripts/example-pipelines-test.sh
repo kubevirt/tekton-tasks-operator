@@ -86,9 +86,9 @@ make deploy
 
 # Deploy tekton task sample
 oc apply -f "config/samples/tektontasks_v1alpha1_tektontasks.yaml"
-wait_until_exists "pipeline ${TARGET}-installer -n kubevirt" wait_until_exists "pipeline windows-customize -n kubevirt"
+wait_until_exists "pipeline windows-efi-installer -n kubevirt" wait_until_exists "pipeline windows-customize -n kubevirt"
 
-# Run windows10/11-installer pipeline
+# Run windows10/11/2022-installer pipeline
 echo "Running ${TARGET}-installer pipeline"
 oc create -n kubevirt -f "scripts/test-files/${TARGET}-installer-pipelinerun.yaml"
 wait_until_exists "pipelinerun -n kubevirt -l pipelinerun=${TARGET}-installer-run"
