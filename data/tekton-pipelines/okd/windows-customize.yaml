@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: windows10-sqlserver
+  name: windows-sqlserver
 data:
   unattend.xml: |
     <?xml version="1.0" encoding="utf-8"?>
@@ -52,6 +52,59 @@ data:
     # Eject CD, to avoid that the unattend.xml on the CD is picked up by sysprep
     (New-Object -COMObject Shell.Application).NameSpace(17).ParseName("D:").InvokeVerb("Eject")
 ---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: windows-vs-code
+data:
+  unattend.xml: |
+    <?xml version="1.0" encoding="utf-8"?>
+    <unattend xmlns="urn:schemas-microsoft-com:unattend" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State">
+      <settings pass="specialize">
+        <component name="Microsoft-Windows-International-Core" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS">
+          <InputLocale>0409:00000409</InputLocale>
+          <SystemLocale>en-US</SystemLocale>
+          <UILanguage>en-US</UILanguage>
+          <UserLocale>en-US</UserLocale>
+        </component>
+      </settings>
+      <settings pass="oobeSystem">
+        <component name="Microsoft-Windows-Deployment" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS">
+          <Reseal>
+            <Mode>Audit</Mode>
+          </Reseal>
+        </component>
+      </settings>
+      <settings pass="auditUser">
+        <component name="Microsoft-Windows-Deployment" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS">
+          <RunSynchronous>
+            <RunSynchronousCommand wcm:action="add">
+              <Order>1</Order>
+              <Path>PowerShell -ExecutionPolicy Bypass -NoProfile D:\vsCode-install.ps1</Path>
+              <Description>Run VS Code-install script</Description>
+            </RunSynchronousCommand>
+          </RunSynchronous>
+          <Generalize>
+            <ForceShutdownNow>true</ForceShutdownNow>
+            <Mode>OOBE</Mode>
+          </Generalize>
+        </component>
+      </settings>
+    </unattend>
+  vsCode-install.ps1: |
+    # Download VS Code
+    $url = "https://code.visualstudio.com/sha/download?build=stable&os=win32-x64-user"
+    $setupPath = "C:\VSCodeUserSetup-x64.exe"
+    Invoke-WebRequest -Uri $url -OutFile $setupPath
+
+    # vs code
+    Start-Process $setupPath -Wait -ArgumentList "/ACTION=INSTALL /VERYSILENT /MERGETASKS=!runcode"
+
+    # Rename cached unattend.xml to avoid it is picked up by sysprep
+    mv C:\Windows\Panther\unattend.xml C:\Windows\Panther\unattend.visualStudio.xml
+
+    # Eject CD, to avoid that the unattend.xml on the CD is picked up by sysprep
+    (New-Object -COMObject Shell.Application).NameSpace(17).ParseName("D:").InvokeVerb("Eject")
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -142,7 +195,7 @@ spec:
     - name: customizeConfigMapName
       description: Name of the ConfigMap containing the customization and sysprep configuration files (unattend.xml, etc.). For example windows10-sqlserver or windows11-vs-code. It is possible to provide customize ConfigMaps created by the user too.
       type: string
-      default: windows10-sqlserver
+      default: windows-sqlserver
     - name: customizeTemplateName
       description: Name of the customize Template which is created. A VM created from this template is used to customize Windows.
       type: string

@@ -196,7 +196,7 @@ var _ = Describe("Tekton-tasks", func() {
 
 		It("[test_id:TODO]operator should create cluster role", func() {
 			liveCR := &rbac.ClusterRoleList{}
-			clusterRoleName := "windows10-pipelines"
+			clusterRoleName := "windows-pipelines"
 			Eventually(func() bool {
 				err := apiClient.List(ctx, liveCR,
 					client.MatchingLabels{
