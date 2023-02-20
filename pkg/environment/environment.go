@@ -44,7 +44,7 @@ const (
 	DeafultCopyTemplateIMG      = "quay.io/kubevirt/tekton-task-copy-template:" + operands.TektonTasksVersion
 	DeafultCleanupVMIMG         = "quay.io/kubevirt/tekton-task-execute-in-vm:" + operands.TektonTasksVersion
 	GenerateSSHKeysIMG          = "quay.io/kubevirt/tekton-task-generate-ssh-keys:" + operands.TektonTasksVersion
-	DefaultVirtioIMG            = "quay.io/kubevirt/virtio-container-disk:v0.58.0"
+	DefaultVirtioIMG            = "quay.io/kubevirt/virtio-container-disk:v0.58.1"
 
 	defaultOperatorVersion = "devel"
 )
