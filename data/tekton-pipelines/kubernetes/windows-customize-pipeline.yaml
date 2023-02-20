@@ -16,7 +16,7 @@ spec:
     - name: customizeConfigMapName
       description: Name of the ConfigMap containing the customization and sysprep configuration files (unattend.xml, etc.). For example windows10-sqlserver or windows11-vs-code. It is possible to provide customize ConfigMaps created by the user too.
       type: string
-      default: windows10-sqlserver
+      default: windows10-vs-code
   tasks:
     - name: create-base-dv
       params:
