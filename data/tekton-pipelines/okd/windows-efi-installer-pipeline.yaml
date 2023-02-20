@@ -26,6 +26,19 @@ spec:
       taskRef:
         kind: ClusterTask
         name: modify-vm-template
+    - name: delete-imported-iso
+      params:
+        - name: deleteObject
+          value: "true"
+        - name: deleteObjectKind
+          value: "PersistentVolumeClaim"
+        - name: deleteObjectName
+          value: "$(tasks.import-win-iso.results.name)"
+        - name: namespace
+          value: "$(tasks.import-win-iso.results.namespace)"
+      taskRef:
+        kind: ClusterTask
+        name: modify-data-object
   params:
     - description: Download URL to Windows 11 or server 2022 installation ISO (English United States x64 version is needed). You can follow https://www.microsoft.com/en-us/software-download/windows11 or https://www.microsoft.com/en-us/evalcenter/evaluate-windows-server-2022 to get one.
       name: winImageDownloadURL
@@ -65,10 +78,6 @@ spec:
     - default: win11
       description: Name of Windows ISO datavolume
       name: isoDVName
-      type: string
-    - default: "false"
-      description: Allow to replace an already existing ISO DV.
-      name: allowReplaceISODV
       type: string
   results:
     - description: Name of the created installer Template
@@ -244,7 +253,7 @@ spec:
             metadata:
               annotations:
                 cdi.kubevirt.io/storage.bind.immediate.requested: "true"
-              name: "$(params.isoDVName)"
+              generateName: "$(params.isoDVName)-"
             spec:
               source:
                 http:
@@ -257,8 +266,6 @@ spec:
                     storage: 9Gi
         - name: waitForSuccess
           value: "true"
-        - name: allowReplace
-          value: "$(params.allowReplaceISODV)"
         - name: deleteObject
           value: "false"
       taskRef:

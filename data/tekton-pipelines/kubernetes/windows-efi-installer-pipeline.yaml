@@ -205,6 +205,19 @@ spec:
       taskRef:
         kind: ClusterTask
         name: cleanup-vm
+    - name: delete-imported-iso
+      params:
+        - name: deleteObject
+          value: "true"
+        - name: deleteObjectKind
+          value: "PersistentVolumeClaim"
+        - name: deleteObjectName
+          value: "$(tasks.import-win-iso.results.name)"
+        - name: namespace
+          value: "$(tasks.import-win-iso.results.namespace)"
+      taskRef:
+        kind: ClusterTask
+        name: modify-data-object
   results:
     - name: baseDvName
       description: Name of the created base DataVolume
