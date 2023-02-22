@@ -12,6 +12,8 @@ spec:
       value: windows2k22-desktop-large-customize-sqlserver
     - name: goldenTemplateName
       value: windows2k22-desktop-large-golden-sqlserver
+    - name: customizeConfigMapName
+      value: windows-sqlserver
   pipelineRef:
     name: windows-customize
   taskRunSpecs:

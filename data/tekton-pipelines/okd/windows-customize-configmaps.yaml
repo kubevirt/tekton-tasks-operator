@@ -39,6 +39,9 @@ data:
       </settings>
     </unattend>
   sqlserver-install.ps1: |
+    #https://github.com/kubevirt/user-guide/pull/645
+    netsh interface ipv4 set subinterface "Ethernet Instance 0" mtu=1200 store=persistent
+
     # Download SQL server
     $url = "https://go.microsoft.com/fwlink/?linkid=866658"
     $setupPath = "C:\SQL2019-SSEI-Expr.exe"
@@ -93,6 +96,9 @@ data:
       </settings>
     </unattend>
   vsCode-install.ps1: |
+    #https://github.com/kubevirt/user-guide/pull/645
+    netsh interface ipv4 set subinterface "Ethernet Instance 0" mtu=1200 store=persistent
+
     # Download VS Code
     $url = "https://code.visualstudio.com/sha/download?build=stable&os=win32-x64-user"
     $setupPath = "C:\VSCodeUserSetup-x64.exe"

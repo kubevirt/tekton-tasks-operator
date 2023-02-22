@@ -18,11 +18,11 @@ spec:
     - name: customizeConfigMapName
       description: Name of the ConfigMap containing the customization and sysprep configuration files (unattend.xml, etc.). For example windows10-sqlserver or windows11-vs-code. It is possible to provide customize ConfigMaps created by the user too.
       type: string
-      default: windows-sqlserver
+      default: windows-vs-code
     - name: customizeTemplateName
       description: Name of the customize Template which is created. A VM created from this template is used to customize Windows.
       type: string
-      default: windows10-desktop-large-customize-sqlserver
+      default: windows10-desktop-large-customize-vs-code
     - name: allowReplaceCustomizationTemplate
       description: Allow to replace an already existing customize Template.
       type: string
@@ -30,7 +30,7 @@ spec:
     - name: goldenTemplateName
       description: Name of the golden Template which is created. Pre-installed Windows VMs can be created from this template.
       type: string
-      default: windows10-desktop-large-golden-sqlserver
+      default: windows10-desktop-large-golden-vs-code
     - name: allowReplaceGoldenTemplate
       description: Allow to replace an already existing golden Template.
       type: string
