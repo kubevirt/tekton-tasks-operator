@@ -26,7 +26,7 @@ const (
 	OperatorNamespaceKey      = "OPERATOR_NAMESPACE"
 	CleanupVMImageKey         = "CLEANUP_VM_IMG"
 	CopyTemplateImageKey      = "COPY_TEMPLATE_IMG"
-	ModifyDataObjectImageKey  = "MODIFY_DATAOBJECT_IMG"
+	ModifyDataObjectImageKey  = "MODIFY_DATA_OBJECT_IMG"
 	CreateVMImageKey          = "CREATE_VM_IMG"
 	DiskVirtCustomizeImageKey = "DISK_VIRT_CUSTOMIZE_IMG"
 	DiskVirtSysprepImageKey   = "DISK_VIRT_SYSPREP_IMG"
