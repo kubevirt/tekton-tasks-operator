@@ -258,9 +258,8 @@ spec:
               source:
                 http:
                   url: "$(params.winImageDownloadURL)"
-              pvc:
-                accessModes:
-                  - ReadWriteOnce
+              storage:
+                volumeMode: "Filesystem"
                 resources:
                   requests:
                     storage: 9Gi
