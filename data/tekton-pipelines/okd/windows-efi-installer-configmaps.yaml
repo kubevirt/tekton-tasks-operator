@@ -257,6 +257,9 @@ data:
                     <AcceptEula>true</AcceptEula>
                     <FullName>AdminAccount</FullName>
                     <Organization>OrgName</Organization>
+                    <ProductKey>
+                        <Key>WX4NM-KYWYW-QJJR4-XV3QB-6VM33</Key>
+                    </ProductKey>
                 </UserData>
             </component>
         </settings>
