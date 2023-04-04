@@ -40,7 +40,7 @@ data:
     </unattend>
   sqlserver-install.ps1: |
     #https://github.com/kubevirt/user-guide/pull/645
-    netsh interface ipv4 set subinterface "Ethernet Instance 0" mtu=1200 store=persistent
+    Set-NetIPInterface -InterfaceIndex $(Get-NetAdapter).ifIndex -NlMtuBytes 1300
 
     # Download SQL server
     $url = "https://go.microsoft.com/fwlink/?linkid=866658"
@@ -97,7 +97,7 @@ data:
     </unattend>
   vsCode-install.ps1: |
     #https://github.com/kubevirt/user-guide/pull/645
-    netsh interface ipv4 set subinterface "Ethernet Instance 0" mtu=1200 store=persistent
+    Set-NetIPInterface -InterfaceIndex $(Get-NetAdapter).ifIndex -NlMtuBytes 1300
 
     # Download VS Code
     $url = "https://code.visualstudio.com/sha/download?build=stable&os=win32-x64-user"
