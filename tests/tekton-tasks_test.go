@@ -33,8 +33,8 @@ var _ = Describe("Tekton-tasks", func() {
 			deleteTekton(tto)
 		})
 
-		It("[test_id:TODO]operator should not create any cluster tasks", func() {
-			liveTasks := &pipeline.ClusterTaskList{}
+		It("[test_id:TODO]operator should not create any tasks", func() {
+			liveTasks := &pipeline.TaskList{}
 
 			err := apiClient.List(ctx, liveTasks,
 				client.MatchingLabels{
@@ -51,7 +51,7 @@ var _ = Describe("Tekton-tasks", func() {
 			err = apiClient.Delete(ctx, &liveTasks.Items[0])
 			Expect(err).ToNot(HaveOccurred())
 
-			deletedTask := &pipeline.ClusterTask{}
+			deletedTask := &pipeline.Task{}
 			Consistently(func() metav1.StatusReason {
 				err := apiClient.Get(ctx, client.ObjectKeyFromObject(&liveTasks.Items[0]), deletedTask)
 				Expect(err).To(HaveOccurred())
@@ -152,7 +152,7 @@ var _ = Describe("Tekton-tasks", func() {
 		})
 
 		It("[test_id:TODO]operator should create only allowed tekton-tasks with correct labels", func() {
-			liveTasks := &pipeline.ClusterTaskList{}
+			liveTasks := &pipeline.TaskList{}
 			Eventually(func() bool {
 				err := apiClient.List(ctx, liveTasks,
 					client.MatchingLabels{
@@ -253,7 +253,7 @@ var _ = Describe("Tekton-tasks", func() {
 		It("[test_id:TODO]operator should delete tekton-tasks", func() {
 			tto := getTekton()
 			deleteTekton(tto)
-			liveTasks := &pipeline.ClusterTaskList{}
+			liveTasks := &pipeline.TaskList{}
 			Eventually(func() bool {
 				err := apiClient.List(ctx, liveTasks,
 					client.MatchingLabels{
@@ -262,7 +262,7 @@ var _ = Describe("Tekton-tasks", func() {
 				)
 				Expect(err).ToNot(HaveOccurred())
 				return len(liveTasks.Items) == 0
-			}, tenSecondTimeout, time.Second).Should(BeTrue(), "there should be no cluster tasks left")
+			}, tenSecondTimeout, time.Second).Should(BeTrue(), "there should be no tasks left")
 		})
 
 		It("[test_id:TODO]operator should delete service accounts", func() {

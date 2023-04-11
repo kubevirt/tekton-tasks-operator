@@ -28,6 +28,7 @@ const (
 // TektonTasksSpec defines the desired state of TektonTasks
 type TektonTasksSpec struct {
 	Pipelines    Pipelines    `json:"pipelines,omitempty"`
+	Tasks        *Tasks       `json:"tasks,omitempty"`
 	FeatureGates FeatureGates `json:"featureGates,omitempty"`
 }
 
@@ -38,6 +39,11 @@ type FeatureGates struct {
 
 // Pipelines defines variables for configuration of pipelines
 type Pipelines struct {
+	Namespace string `json:"namespace,omitempty"`
+}
+
+// Tasks defines variables for configuration of tasks
+type Tasks struct {
 	Namespace string `json:"namespace,omitempty"`
 }
 

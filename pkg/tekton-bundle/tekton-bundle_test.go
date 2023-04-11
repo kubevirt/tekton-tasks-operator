@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	numberOfClusterTasks    = 11
+	numberOfTasks           = 11
 	numberOfServiceAccounts = 9
 	numberOfRoleBindings    = 9
 	numberOfClusterRoles    = 9
@@ -57,7 +57,7 @@ var _ = Describe("Tekton bundle", func() {
 
 		tektonObjs, err := decodeObjectsFromFiles(files)
 		Expect(err).ToNot(HaveOccurred(), "it should not throw error")
-		Expect(tektonObjs.ClusterTasks).To(HaveLen(numberOfClusterTasks), "number of tasks should equal")
+		Expect(tektonObjs.Tasks).To(HaveLen(numberOfTasks), "number of tasks should equal")
 		Expect(tektonObjs.ServiceAccounts).To(HaveLen(numberOfServiceAccounts), "number of service accounts should equal")
 		Expect(tektonObjs.RoleBindings).To(HaveLen(numberOfRoleBindings), "number of role bindings should equal")
 		Expect(tektonObjs.ClusterRoles).To(HaveLen(numberOfClusterRoles), "number of cluster roles should equal")

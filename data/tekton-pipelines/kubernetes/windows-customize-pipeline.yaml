@@ -34,7 +34,7 @@ spec:
                   namespace: $(params.sourceDataVolumeNamespace)
       timeout: 1h
       taskRef:
-        kind: ClusterTask
+        kind: Task
         name: modify-data-object
     - name: create-vm-from-manifest
       params:
@@ -129,7 +129,7 @@ spec:
         - create-base-dv
       timeout: 10m
       taskRef:
-        kind: ClusterTask
+        kind: Task
         name: create-vm-from-manifest
     - name: wait-for-vmi-status
       params:
@@ -143,7 +143,7 @@ spec:
         - create-vm-from-manifest
       timeout: 2h
       taskRef:
-        kind: ClusterTask
+        kind: Task
         name: wait-for-vmi-status
   finally:
     - name: cleanup-vm
@@ -154,7 +154,7 @@ spec:
           value: "true"
       timeout: 10m
       taskRef:
-        kind: ClusterTask
+        kind: Task
         name: cleanup-vm
   results:
     - name: baseDvName

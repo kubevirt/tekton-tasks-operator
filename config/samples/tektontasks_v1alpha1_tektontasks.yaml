@@ -8,3 +8,5 @@ spec:
     deployTektonTaskResources: true
   pipelines:
     namespace: kubevirt
+  tasks:
+    namespace: kubevirt

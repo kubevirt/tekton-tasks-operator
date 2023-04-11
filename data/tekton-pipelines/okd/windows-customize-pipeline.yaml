@@ -48,7 +48,7 @@ spec:
           value: $(params.allowReplaceCustomizationTemplate)
       timeout: 10m
       taskRef:
-        kind: ClusterTask
+        kind: Task
         name: copy-template
     - name: modify-vm-template-customize
       params:
@@ -90,7 +90,7 @@ spec:
         - copy-template-customize
       timeout: 10m
       taskRef:
-        kind: ClusterTask
+        kind: Task
         name: modify-vm-template
     - name: create-vm-from-template
       params:
@@ -104,7 +104,7 @@ spec:
         - modify-vm-template-customize
       timeout: 10m
       taskRef:
-        kind: ClusterTask
+        kind: Task
         name: create-vm-from-template
     - name: wait-for-vmi-status
       params:
@@ -118,7 +118,7 @@ spec:
         - create-vm-from-template
       timeout: 2h
       taskRef:
-        kind: ClusterTask
+        kind: Task
         name: wait-for-vmi-status
     - name: create-base-dv
       params:
@@ -146,7 +146,7 @@ spec:
         - wait-for-vmi-status
       timeout: 1h
       taskRef:
-        kind: ClusterTask
+        kind: Task
         name: modify-data-object
     - name: copy-template-golden
       params:
@@ -162,7 +162,7 @@ spec:
         - create-base-dv
       timeout: 30m
       taskRef:
-        kind: ClusterTask
+        kind: Task
         name: copy-template
     - name: modify-vm-template-golden
       params:
@@ -218,7 +218,7 @@ spec:
         - copy-template-golden
       timeout: 10m
       taskRef:
-        kind: ClusterTask
+        kind: Task
         name: modify-vm-template
   finally:
     - name: cleanup-vm
@@ -229,7 +229,7 @@ spec:
           value: "true"
       timeout: 10m
       taskRef:
-        kind: ClusterTask
+        kind: Task
         name: cleanup-vm
     - name: delete-template-customize
       params:
@@ -240,7 +240,7 @@ spec:
         - name: deleteTemplate
           value: "true"
       taskRef:
-        kind: ClusterTask
+        kind: Task
         name: modify-vm-template
   results:
     - name: baseDvName
