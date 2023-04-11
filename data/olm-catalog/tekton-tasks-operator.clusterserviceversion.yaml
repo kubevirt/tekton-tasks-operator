@@ -18,6 +18,9 @@ metadata:
             },
             "pipelines": {
               "namespace": "kubevirt"
+            },
+            "tasks": {
+              "namespace": "kubevirt"
             }
           }
         }
@@ -181,6 +184,18 @@ spec:
           - tekton.dev
           resources:
           - pipelines
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - tekton.dev
+          resources:
+          - tasks
           verbs:
           - create
           - delete

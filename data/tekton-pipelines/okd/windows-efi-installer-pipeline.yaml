@@ -12,7 +12,7 @@ spec:
         - name: delete
           value: "true"
       taskRef:
-        kind: ClusterTask
+        kind: Task
         name: cleanup-vm
       timeout: 10m0s
     - name: delete-template
@@ -24,7 +24,7 @@ spec:
         - name: deleteTemplate
           value: "true"
       taskRef:
-        kind: ClusterTask
+        kind: Task
         name: modify-vm-template
     - name: delete-imported-iso
       params:
@@ -37,7 +37,7 @@ spec:
         - name: namespace
           value: "$(tasks.import-win-iso.results.namespace)"
       taskRef:
-        kind: ClusterTask
+        kind: Task
         name: modify-data-object
   params:
     - description: Download URL to Windows 11 or server 2022 installation ISO (English United States x64 version is needed). You can follow https://www.microsoft.com/en-us/software-download/windows11 or https://www.microsoft.com/en-us/evalcenter/evaluate-windows-server-2022 to get one.
@@ -104,7 +104,7 @@ spec:
         - name: allowReplace
           value: $(params.allowReplaceInstallerTemplate)
       taskRef:
-        kind: ClusterTask
+        kind: Task
         name: copy-template
       timeout: 10m0s
     - name: modify-vm-template
@@ -187,7 +187,7 @@ spec:
         - copy-template
         - modify-windows-iso-file
       taskRef:
-        kind: ClusterTask
+        kind: Task
         name: modify-vm-template
       timeout: 10m0s
     - name: create-vm-from-template
@@ -201,7 +201,7 @@ spec:
       runAfter:
         - modify-vm-template
       taskRef:
-        kind: ClusterTask
+        kind: Task
         name: create-vm-from-template
     - name: wait-for-vmi-status
       params:
@@ -214,7 +214,7 @@ spec:
       runAfter:
         - create-vm-from-template
       taskRef:
-        kind: ClusterTask
+        kind: Task
         name: wait-for-vmi-status
       timeout: 2h0m0s
     - name: create-base-dv
@@ -241,7 +241,7 @@ spec:
       runAfter:
         - wait-for-vmi-status
       taskRef:
-        kind: ClusterTask
+        kind: Task
         name: modify-data-object
       timeout: 1h0m0s
     - name: import-win-iso
@@ -269,7 +269,7 @@ spec:
         - name: deleteObject
           value: "false"
       taskRef:
-        kind: ClusterTask
+        kind: Task
         name: modify-data-object
     - name: modify-windows-iso-file
       params:
@@ -278,5 +278,5 @@ spec:
       runAfter:
         - import-win-iso
       taskRef:
-        kind: ClusterTask
+        kind: Task
         name: modify-windows-iso-file

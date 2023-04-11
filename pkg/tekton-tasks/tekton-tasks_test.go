@@ -36,11 +36,11 @@ var _ = Describe("environments", func() {
 
 	It("New function should return object with correct tasks", func() {
 		res := New(getMockedTestBundle())
-		Expect(len(res.clusterTasks)).To(Equal(11), "should return correct number of tasks")
+		Expect(len(res.tasks)).To(Equal(11), "should return correct number of tasks")
 		Expect(len(res.serviceAccounts)).To(Equal(11), "should return correct number of service accounts")
 		Expect(len(res.roleBindings)).To(Equal(11), "should return correct number of role bindings")
 		Expect(len(res.clusterRoles)).To(Equal(11), "should return correct number of cluster roles")
-		for _, task := range res.clusterTasks {
+		for _, task := range res.tasks {
 			if _, ok := AllowedTasks[task.Name]; !ok {
 				Expect(ok).To(BeTrue(), "only allowed task is deployed - "+task.Name)
 			}
@@ -126,7 +126,7 @@ func getMockedRequest() *common.Request {
 
 func getMockedTektonTasksOperand() *tektonTasks {
 	return &tektonTasks{
-		clusterTasks: []pipeline.ClusterTask{
+		tasks: []pipeline.Task{
 			{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: map[string]string{},
@@ -195,7 +195,7 @@ func getMockedTektonTasksOperand() *tektonTasks {
 
 func getMockedTestBundle() *tektonbundle.Bundle {
 	return &tektonbundle.Bundle{
-		ClusterTasks: []pipeline.ClusterTask{
+		Tasks: []pipeline.Task{
 			{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "wrong-task",

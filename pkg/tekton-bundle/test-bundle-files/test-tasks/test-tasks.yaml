@@ -1,6 +1,6 @@
 ---
 apiVersion: tekton.dev/v1beta1
-kind: ClusterTask
+kind: Task
 metadata:
   annotations:
     task.kubevirt.io/associatedServiceAccount: cleanup-vm-task
@@ -130,7 +130,7 @@ subjects:
     name: cleanup-vm-task
 ---
 apiVersion: tekton.dev/v1beta1
-kind: ClusterTask
+kind: Task
 metadata:
   annotations:
     task.kubevirt.io/associatedServiceAccount: copy-template-task
@@ -219,7 +219,7 @@ subjects:
     name: copy-template-task
 ---
 apiVersion: tekton.dev/v1beta1
-kind: ClusterTask
+kind: Task
 metadata:
   annotations:
     task.kubevirt.io/associatedServiceAccount: modify-data-object-task
@@ -321,7 +321,7 @@ subjects:
     name: modify-data-object-task
 ---
 apiVersion: tekton.dev/v1beta1
-kind: ClusterTask
+kind: Task
 metadata:
   annotations:
     task.kubevirt.io/associatedServiceAccount: create-vm-from-manifest-task
@@ -461,7 +461,7 @@ subjects:
     name: create-vm-from-manifest-task
 ---
 apiVersion: tekton.dev/v1beta1
-kind: ClusterTask
+kind: Task
 metadata:
   annotations:
     task.kubevirt.io/associatedServiceAccount: create-vm-from-template-task
@@ -629,7 +629,7 @@ subjects:
     name: create-vm-from-template-task
 ---
 apiVersion: tekton.dev/v1beta1
-kind: ClusterTask
+kind: Task
 metadata:
   annotations:
     pvc.params.task.kubevirt.io/kind: PersistentVolumeClaim
@@ -698,7 +698,7 @@ spec:
         claimName: $(params.pvc)
 ---
 apiVersion: tekton.dev/v1beta1
-kind: ClusterTask
+kind: Task
 metadata:
   annotations:
     pvc.params.task.kubevirt.io/kind: PersistentVolumeClaim
@@ -767,7 +767,7 @@ spec:
         claimName: $(params.pvc)
 ---
 apiVersion: tekton.dev/v1beta1
-kind: ClusterTask
+kind: Task
 metadata:
   annotations:
     task.kubevirt.io/associatedServiceAccount: execute-in-vm-task
@@ -875,7 +875,7 @@ subjects:
     name: execute-in-vm-task
 ---
 apiVersion: tekton.dev/v1beta1
-kind: ClusterTask
+kind: Task
 metadata:
   annotations:
     task.kubevirt.io/associatedServiceAccount: generate-ssh-keys-task
@@ -977,7 +977,7 @@ subjects:
     name: generate-ssh-keys-task
 ---
 apiVersion: tekton.dev/v1beta1
-kind: ClusterTask
+kind: Task
 metadata:
   annotations:
     task.kubevirt.io/associatedServiceAccount: modify-vm-template-task
@@ -1110,7 +1110,7 @@ subjects:
     name: modify-vm-template-task
 ---
 apiVersion: tekton.dev/v1beta1
-kind: ClusterTask
+kind: Task
 metadata:
   annotations:
     task.kubevirt.io/associatedServiceAccount: wait-for-vmi-status-task

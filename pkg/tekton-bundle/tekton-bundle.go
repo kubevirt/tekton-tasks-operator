@@ -29,7 +29,7 @@ const (
 )
 
 var (
-	clusterTasksString = string(pipeline.ClusterTaskKind)
+	tasksString        = string(pipeline.NamespacedTaskKind)
 	pipelineKindString = "Pipeline"
 	serviceAccountKind = rbac.ServiceAccountKind
 	roleBindingKind    = "RoleBinding"
@@ -38,7 +38,7 @@ var (
 )
 
 type Bundle struct {
-	ClusterTasks    []pipeline.ClusterTask
+	Tasks           []pipeline.Task
 	ServiceAccounts []v1.ServiceAccount
 	RoleBindings    []rbac.RoleBinding
 	ClusterRoles    []rbac.ClusterRole
@@ -166,13 +166,13 @@ func decodeObjectsFromFiles(files [][]byte) (*Bundle, error) {
 				}
 
 				switch kind {
-				case clusterTasksString:
-					clusterTask := pipeline.ClusterTask{}
-					err = getObject(obj, &clusterTask)
+				case tasksString:
+					task := pipeline.Task{}
+					err = getObject(obj, &task)
 					if err != nil {
 						return nil, err
 					}
-					bundle.ClusterTasks = append(bundle.ClusterTasks, clusterTask)
+					bundle.Tasks = append(bundle.Tasks, task)
 				case pipelineKindString:
 					p := pipeline.Pipeline{}
 					err = getObject(obj, &p)

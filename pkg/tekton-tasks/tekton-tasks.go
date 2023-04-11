@@ -16,6 +16,7 @@ import (
 )
 
 // +kubebuilder:rbac:groups=tekton.dev,resources=clustertasks,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=tekton.dev,resources=tasks,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=core,resources=serviceaccounts,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=clusterroles;rolebindings,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=kubevirt.io,resources=virtualmachineinstances;virtualmachines,verbs=create;update;get;list;watch;delete
@@ -69,7 +70,7 @@ func init() {
 }
 
 type tektonTasks struct {
-	clusterTasks    []pipeline.ClusterTask
+	tasks           []pipeline.Task
 	serviceAccounts []v1.ServiceAccount
 	roleBindings    []rbac.RoleBinding
 	clusterRoles    []rbac.ClusterRole
@@ -79,7 +80,7 @@ var _ operands.Operand = &tektonTasks{}
 
 func New(bundle *tektonbundle.Bundle) *tektonTasks {
 	tt := &tektonTasks{
-		clusterTasks:    bundle.ClusterTasks,
+		tasks:           bundle.Tasks,
 		serviceAccounts: bundle.ServiceAccounts,
 		roleBindings:    bundle.RoleBindings,
 		clusterRoles:    bundle.ClusterRoles,
@@ -112,13 +113,13 @@ func (t *tektonTasks) RequiredCrds() []string {
 }
 
 func (t *tektonTasks) filterUnusedObjects() {
-	newTasks := []pipeline.ClusterTask{}
-	for _, task := range t.clusterTasks {
+	newTasks := []pipeline.Task{}
+	for _, task := range t.tasks {
 		if _, ok := AllowedTasks[task.Name]; ok {
 			newTasks = append(newTasks, task)
 		}
 	}
-	t.clusterTasks = newTasks
+	t.tasks = newTasks
 
 	newSA := []v1.ServiceAccount{}
 	for _, sa := range t.serviceAccounts {
@@ -148,7 +149,7 @@ func (t *tektonTasks) filterUnusedObjects() {
 func (t *tektonTasks) Reconcile(request *common.Request) ([]common.ReconcileResult, error) {
 	var results []common.ReconcileResult
 	var reconcileFunc []common.ReconcileFunc
-	reconcileFunc = append(reconcileFunc, reconcileTektonTasksFuncs(t.clusterTasks)...)
+	reconcileFunc = append(reconcileFunc, reconcileTektonTasksFuncs(t.tasks)...)
 	reconcileFunc = append(reconcileFunc, reconcileClusterRoleFuncs(t.clusterRoles)...)
 	reconcileFunc = append(reconcileFunc, reconcileServiceAccountsFuncs(t.serviceAccounts)...)
 	reconcileFunc = append(reconcileFunc, reconcileRoleBindingFuncs(t.roleBindings)...)
@@ -169,8 +170,9 @@ func (t *tektonTasks) Reconcile(request *common.Request) ([]common.ReconcileResu
 
 func (t *tektonTasks) Cleanup(request *common.Request) ([]common.CleanupResult, error) {
 	var objects []client.Object
-	for _, ct := range t.clusterTasks {
-		o := ct.DeepCopy()
+
+	for _, t := range t.tasks {
+		o := t.DeepCopy()
 		objects = append(objects, o)
 	}
 	for _, cr := range t.clusterRoles {
@@ -185,18 +187,47 @@ func (t *tektonTasks) Cleanup(request *common.Request) ([]common.CleanupResult, 
 		o := sa.DeepCopy()
 		objects = append(objects, o)
 	}
+
+	clusterTasks, err := listDeprecatedClusterTasks(request)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, ct := range clusterTasks {
+		o := ct.DeepCopy()
+		objects = append(objects, o)
+	}
+
 	return common.DeleteAll(request, objects...)
 }
 
+func listDeprecatedClusterTasks(request *common.Request) ([]pipeline.ClusterTask, error) {
+	deprecatedClusterTasks := &pipeline.ClusterTaskList{}
+	err := request.Client.List(request.Context, deprecatedClusterTasks, &client.MatchingLabels{
+		common.AppKubernetesManagedByLabel: common.AppKubernetesManagedByValue,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return deprecatedClusterTasks.Items, nil
+
+}
 func isUpgradingNow(request *common.Request) bool {
 	return request.Instance.Status.ObservedVersion != environment.GetOperatorVersion()
 }
 
-func reconcileTektonTasksFuncs(tasks []pipeline.ClusterTask) []common.ReconcileFunc {
+func reconcileTektonTasksFuncs(tasks []pipeline.Task) []common.ReconcileFunc {
 	funcs := make([]common.ReconcileFunc, 0, len(tasks))
 	for i := range tasks {
 		task := &tasks[i]
 		funcs = append(funcs, func(request *common.Request) (common.ReconcileResult, error) {
+			task.Namespace = request.Instance.Namespace
+
+			if request.Instance.Spec.Tasks != nil && request.Instance.Spec.Tasks.Namespace != "" {
+				task.Namespace = request.Instance.Spec.Tasks.Namespace
+			}
+
 			if task.Name == modifyWindowsVMIsoFileName {
 				for i, step := range task.Spec.Steps {
 					if step.Name == "create-iso-file" {
@@ -214,8 +245,8 @@ func reconcileTektonTasksFuncs(tasks []pipeline.ClusterTask) []common.ReconcileF
 				ClusterResource(task).
 				WithAppLabels(operandName, operandComponent).
 				UpdateFunc(func(newRes, foundRes client.Object) {
-					newTask := newRes.(*pipeline.ClusterTask)
-					foundTask := foundRes.(*pipeline.ClusterTask)
+					newTask := newRes.(*pipeline.Task)
+					foundTask := foundRes.(*pipeline.Task)
 					foundTask.Spec = newTask.Spec
 				}).
 				Reconcile()

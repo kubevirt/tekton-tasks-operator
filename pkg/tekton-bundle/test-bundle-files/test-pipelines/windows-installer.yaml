@@ -42,7 +42,7 @@ spec:
           value: 'true'
       timeout: '2h'
       taskRef:
-        kind: ClusterTask
+        kind: Task
         name: modify-data-object
     - name: create-base-dv
       params:
@@ -65,7 +65,7 @@ spec:
         - name: waitForSuccess
           value: 'true'
       taskRef:
-        kind: ClusterTask
+        kind: Task
         name: modify-data-object
     - name: create-vm-from-manifest
       params:
@@ -140,7 +140,7 @@ spec:
         - create-source-dv
         - create-base-dv
       taskRef:
-        kind: ClusterTask
+        kind: Task
         name: create-vm-from-manifest
     - name: wait-for-vmi-status
       params:
@@ -154,7 +154,7 @@ spec:
         - create-vm-from-manifest
       timeout: '2h'
       taskRef:
-        kind: ClusterTask
+        kind: Task
         name: wait-for-vmi-status
     - name: cleanup-vm
       params:
@@ -165,5 +165,5 @@ spec:
       runAfter:
         - wait-for-vmi-status
       taskRef:
-        kind: ClusterTask
+        kind: Task
         name: cleanup-vm

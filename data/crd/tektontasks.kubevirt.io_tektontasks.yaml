@@ -46,6 +46,12 @@ spec:
                   namespace:
                     type: string
                 type: object
+              tasks:
+                description: Tasks defines variables for configuration of tasks
+                properties:
+                  namespace:
+                    type: string
+                type: object
             type: object
           status:
             description: TektonTasksStatus defines the observed state of TektonTasks

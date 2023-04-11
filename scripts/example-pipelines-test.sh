@@ -10,6 +10,10 @@ if ! oc get storageclass | grep -q 'ssd-csi (default)' > /dev/null; then
   oc annotate storageclass standard-csi storageclass.kubernetes.io/is-default-class- --overwrite
 fi
 
+# Deploy resources
+echo "Deploying resources"
+./scripts/deploy-resources.sh
+
 # remove tsc node labels which causes that windows VMs could not be scheduled due to different value in tsc node selector
 for node in $(oc get nodes -o name -l node-role.kubernetes.io/worker); do
   tscLabel="$(oc describe $node | grep scheduling.node.kubevirt.io/tsc-frequency- | xargs | cut -d"=" -f1)"
@@ -20,10 +24,6 @@ for node in $(oc get nodes -o name -l node-role.kubernetes.io/worker); do
   oc label ${node} cpu-timer.node.kubevirt.io/tsc-scalable- --overwrite
   oc label ${node} ${tscLabel}- --overwrite
 done
-
-# Deploy resources
-echo "Deploying resources"
-./scripts/deploy-resources.sh
 
 # SECRET
 accessKeyId="/tmp/secrets/accessKeyId"
