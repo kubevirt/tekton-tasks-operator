@@ -1,4 +1,6 @@
 # Tekton Tasks Operator
+This Project is **deprecated**. [Use SSP operator](https://github.com/kubevirt/ssp-operator) instead.
+
 
 Tekton Tasks Operator is Go operator which takes care about 
 deploying [Kubevirt tekton tasks](https://github.com/kubevirt/kubevirt-tekton-tasks) 
